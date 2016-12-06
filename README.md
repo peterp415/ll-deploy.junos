@@ -265,6 +265,13 @@ Create VMs with virt-install:
     --network bridge=br_sync_left,model=virtio \
     --network bridge=br_in_left,model=virtio \
     --network bridge=br_out_left,model=virtio
+    # stand-alone with bridged network settings (srx1-right):
+    # br0           # fxp0 mgmt (DHCP)
+    # br_in_right   # ge-0/0/1 internal
+    # br_out_left   # ge-0/0/2 external (instead of br_out_right with no intermediate host)
+    --network bridge=br0,model=virtio \
+    --network bridge=br_in_right,model=virtio \
+    --network bridge=br_out_left,model=virtio
 
 JunOS Configuration Setup:
 
@@ -287,58 +294,57 @@ Basic Configuration, root password:
     set system root-authentication encrypted-password "$5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD"
     # passwd is Wavemarket
 
-Non-cluster test system settings:
+Non-clustered test system settings:
 
-    set system host-name srx1-left
-    set interfaces fxp0 unit 0 family inet dhcp-client
-    set interfaces ge-0/0/0 unit 0 family inet address 172.16.10.10/24
-    set interfaces ge-0/0/1 unit 0 family inet address 172.16.100.10/24
-    set security zones security-zone trust interfaces ge-0/0/0.0 host-inbound-traffic system-services all
-    set security zones security-zone untrust interfaces ge-0/0/1.0
+    # single-host kvm:
+    # 10.38.31.39  srx1-right fxp0    host3.itlab.hq.wavemarket.com
+    set system host-name srx1-right
+    set interfaces fxp0 unit 0 family inet address 10.38.31.39/27
+    set routing-options static route 0/0 next-hop 10.38.31.33
     commit comment "Initial configuration"
 
-Cluster system settings:
+Clustered test system settings:
 
-  # Enable cluster mode and reboot
-  root@srx1-left> set chassis cluster cluster-id 1 node 0 reboot
-  root@srx2-left> set chassis cluster cluster-id 1 node 1 reboot
-  # Note that interfaces are renamed and hostname is the same on both now
-  # From now on, you only need to make configuration changes on one cluster member
-  # NOTE: I could not get setting fxp0 interfaces to dhcp-client to work at all in a cluster
+    # Enable cluster mode and reboot
+    root@srx1-left> set chassis cluster cluster-id 1 node 0 reboot
+    root@srx2-left> set chassis cluster cluster-id 1 node 1 reboot
+    # Note that interfaces are renamed and hostname is the same on both now
+    # From now on, you only need to make configuration changes on one cluster member
+    # NOTE: I could not get setting fxp0 interfaces to dhcp-client to work at all in a cluster
 
-  # Node-dependent settings
-  set groups node0 system host-name <name-node0>
-  set groups node0 interfaces fxp0 unit 0 family inet address <ip address/mask>
-  set groups node1 system host-name <name-node1>
-  set groups node1 interfaces fxp0 unit 0 family inet address <ip address/mask>
-  set apply-groups "${node}"
-  set routing-options static route 0/0 next-hop <gateway IP>
-  # FAB links
-  set interfaces fab0 fabric-options member-interfaces ge-0/0/0
-  set interfaces fab1 fabric-options member-interfaces ge-7/0/0
-  # Check cluster status and control traffic with:
-  #   show chassis cluster status
-  #   show chassis cluster statistics
+    # Node-dependent settings
+    set groups node0 system host-name <name-node0>
+    set groups node0 interfaces fxp0 unit 0 family inet address <ip address/mask>
+    set groups node1 system host-name <name-node1>
+    set groups node1 interfaces fxp0 unit 0 family inet address <ip address/mask>
+    set apply-groups "${node}"
+    set routing-options static route 0/0 next-hop <gateway IP>
+    # FAB links
+    set interfaces fab0 fabric-options member-interfaces ge-0/0/0
+    set interfaces fab1 fabric-options member-interfaces ge-7/0/0
+    # Check cluster status and control traffic with:
+    #   show chassis cluster status
+    #   show chassis cluster statistics
 
-  # single-host libvirt
-  # srx1-left fxp0.0: 192.168.122.101
-  # srx2-left fxp0.0: 192.168.122.102
-  set groups node0 system host-name srx1-left
-  set groups node0 interfaces fxp0 unit 0 family inet address 192.168.122.101/24
-  set groups node1 system host-name srx2-left
-  set groups node1 interfaces fxp0 unit 0 family inet address 192.168.122.102/24
-  set apply-groups "${node}"
+    # single-host libvirt
+    # srx1-left fxp0.0: 192.168.122.101
+    # srx2-left fxp0.0: 192.168.122.102
+    set groups node0 system host-name srx1-left
+    set groups node0 interfaces fxp0 unit 0 family inet address 192.168.122.101/24
+    set groups node1 system host-name srx2-left
+    set groups node1 interfaces fxp0 unit 0 family inet address 192.168.122.102/24
+    set apply-groups "${node}"
 
-  # two-host cluster:
-  # 10.38.31.37  srx1-left  fxp0
-  # 10.38.31.38  srx2-left  fxp0
-  # 10.38.31.39  srx1-right fxp0
-  set groups node0 system host-name srx1-left
-  set groups node0 interfaces fxp0 unit 0 family inet address 10.38.31.37/27
-  set groups node1 system host-name srx2-left
-  set groups node1 interfaces fxp0 unit 0 family inet address 10.38.31.38/27
-  set apply-groups "${node}"
-  set routing-options static route 0/0 next-hop 10.38.31.33
+    # two-host cluster:
+    # 10.38.31.37  srx1-left  fxp0    host1.itlab.hq.wavemarket.com
+    # 10.38.31.38  srx2-left  fxp0    host2.itlab.hq.wavemarket.com
+    set groups node0 system host-name srx1-left
+    set groups node0 interfaces fxp0 unit 0 family inet address 10.38.31.37/27
+    set groups node1 system host-name srx2-left
+    set groups node1 interfaces fxp0 unit 0 family inet address 10.38.31.38/27
+    set apply-groups "${node}"
+    set routing-options static route 0/0 next-hop 10.38.31.33
+
 
 ## SRX Ansible Management
 
@@ -441,6 +447,14 @@ set interfaces ge-7/0/2 gigether-options redundant-parent reth1
 set interfaces reth1 redundant-ether-options redundancy-group 1
 set interfaces reth1.0 family inet address 172.16.100.10/24
 set security zones security-zone untrust interfaces reth1.0
+
+### SRX Interfaces and zones
+
+    # standalone test system
+    set interfaces ge-0/0/0 unit 0 family inet address 172.16.10.10/24
+    set interfaces ge-0/0/1 unit 0 family inet address 172.16.100.10/24
+    set security zones security-zone trust interfaces ge-0/0/0.0 host-inbound-traffic system-services all
+    set security zones security-zone untrust interfaces ge-0/0/1.0
 
 
 
