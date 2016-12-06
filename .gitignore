@@ -1,6 +1,7 @@
 ansible-log
 galaxy-roles/
 shared-roles/
+*.retry
 .ropeproject/
 *.tar
 

@@ -1,1 +1,3 @@
 ansible>=2.2
+# junos-eznc >= 1.2.2 required by Juniper.junos role per https://github.com/Juniper/ansible-junos-stdlib
+junos-eznc>=1.2.2

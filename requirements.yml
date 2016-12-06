@@ -1,0 +1,9 @@
+---
+
+# This gets the same thing as
+#   ansible-galaxy install -p ./shared-roles Juniper.junos
+- src: https://github.com/Juniper/ansible-junos-stdlib.git
+  scm: git
+  version: "1.4.0"
+  name: Juniper.junos
+
