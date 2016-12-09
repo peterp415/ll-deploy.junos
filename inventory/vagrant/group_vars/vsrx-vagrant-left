@@ -1,0 +1,16 @@
+---
+
+# SRX template variables
+
+# Ethernet interfaces and their zones
+#  set interfaces ge-0/0/0 unit 0 family inet address 172.16.10.10/24
+#  set interfaces ge-0/0/1 unit 0 family inet address 172.16.100.20/24
+#  set security zones security-zone trust interfaces ge-0/0/1.0
+#  set security zones security-zone untrust interfaces ge-0/0/2.0
+junos_interfaces:
+  - name: "ge-0/0/1"
+    address: "172.16.10.10/24"
+    zone: "trust"
+  - name: "ge-0/0/2"
+    address: "172.16.100.20/24"
+    zone: "untrust"

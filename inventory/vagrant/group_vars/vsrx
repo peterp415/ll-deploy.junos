@@ -1,0 +1,90 @@
+---
+
+# Build directory settings
+junos_build_root: ./build_dir
+junos_build_dir: "{{ junos_build_root }}/{{ inventory_hostname }}/tmp"
+junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
+
+# JunOS settings
+junos_config_user: root
+
+# Common template variables
+junos_location:
+  time_zone: PST
+
+# SRX template variables
+
+# Policies and routes
+# Basic zones and traffic policies
+#  set security zones security-zone trust host-inbound-traffic system-services all
+#  set security zones security-zone trust host-inbound-traffic protocols all
+#  set security zones security-zone untrust host-inbound-traffic system-services all
+#  set security zones security-zone untrust host-inbound-traffic protocols all
+junos_zones:
+  - name: "trust"
+    host_inbound_traffic: ["system-services all", "protocols all"]
+  - name: "untrust"
+    host_inbound_traffic: ["system-services all", "protocols all"]
+# Basic zone-to-zone defaults
+#  set security policies from-zone trust to-zone trust policy default-permit match source-address any
+#  set security policies from-zone trust to-zone trust policy default-permit match destination-address any
+#  set security policies from-zone trust to-zone trust policy default-permit match application any
+#  set security policies from-zone trust to-zone trust policy default-permit then permit
+#  set security policies from-zone trust to-zone untrust policy default-permit match source-address any
+#  set security policies from-zone trust to-zone untrust policy default-permit match destination-address any
+#  set security policies from-zone trust to-zone untrust policy default-permit match application any
+#  set security policies from-zone trust to-zone untrust policy default-permit then permit
+#  set security policies from-zone untrust to-zone trust policy default-deny match source-address any
+#  set security policies from-zone untrust to-zone trust policy default-deny match destination-address any
+#  set security policies from-zone untrust to-zone trust policy default-deny match application any
+#  set security policies from-zone untrust to-zone trust policy default-deny then deny
+junos_zone_security_policies:
+  - name: "trust-to-trust"
+    from_zone: "trust"
+    to_zone: "trust"
+    policies:
+      - name: "default-permit"
+        match: ["source-address any", "destination-address any", "application any"]
+        then: "permit"
+  - name: "trust-to-untrust"
+    from_zone: "trust"
+    to_zone: "untrust"
+    policies:
+      - name: "default-permit"
+        match: ["source-address any", "destination-address any", "application any"]
+        then: "permit"
+  - name: "untrust-to-trust"
+    from_zone: "untrust"
+    to_zone: "trust"
+    policies:
+      - name: "default-deny"
+        match: ["source-address any", "destination-address any", "application any"]
+        then: "deny"
+
+# IPSec VPNs
+
+# IPsec: ike/ipsec policies
+#  set security ike policy preshared mode main
+#  set security ike policy preshared proposal-set standard
+#  set security ike policy preshared pre-shared-key ascii-text "$9$w22oZHqfn/tUj/tuOcSwYg"
+#  set security ipsec policy std proposal-set standard
+# IPSec: ike gateways
+#  set security ike gateway SRX5600 ike-policy preshared
+#  set security ike gateway SRX5600 address 10.10.1.40
+#  set security ike gateway SRX5600 external-interface reth0.0
+# IPSec: ipsec vpns
+#  set security ipsec vpn SRX5600 bind-interface st0.0
+#  set security ipsec vpn SRX5600 ike gateway SRX5600
+#  set security ipsec vpn SRX5600 ike ipsec-policy std
+#  set security ipsec vpn SRX5600 establish-tunnels immediately
+# IPSec: Route-based stN interfaces (put this in junos_interfaces?)
+#  set interfaces st0 unit 0 multipoint
+#  set interfaces st0 unit 0 family inet address 10.30.1.1/30
+#  set security-zones security-zone vpn interfaces st0.0
+# VPN Zone policies
+#  set security zones security-zone vpn host-inbound-traffic system-services all
+#  set security zones security-zone vpn host-inbound-traffic protocols all
+#  set security policies from-zone trust to-zone vpn policy any match source-address any
+#  set security policies from-zone trust to-zone vpn policy any match destination-address any
+#  set security policies from-zone trust to-zone vpn policy any match application any
+#  set security policies from-zone trust to-zone vpn policy any then permit

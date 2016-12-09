@@ -1,0 +1,13 @@
+[vsrx]
+
+[vsrx:children]
+vsrx-vagrant-left
+vsrx-vagrant-right
+
+[vsrx-vagrant-left]
+# Vagrant srx1-left
+srx1-left junos_config_hostname=srx1-left.vagrant
+
+[vsrx-vagrant-right]
+# Vagrant srx1-right
+srx1-right junos_config_hostname=srx1-right.vagrant
