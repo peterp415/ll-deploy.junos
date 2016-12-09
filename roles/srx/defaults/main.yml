@@ -1,0 +1,17 @@
+---
+
+# Build directory settings
+junos_build_root: ./build_dir
+junos_build_dir: "{{ junos_build_root }}/{{ inventory_hostname }}/tmp"
+junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
+
+# JunOS settings
+junos_config_user: root
+
+# SRX template variables
+
+junos_interfaces: []
+junos_zones: []
+
+junos_cluster_redundancy_groups: []
+junos_cluster_reth_interfaces: []

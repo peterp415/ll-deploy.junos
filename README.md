@@ -377,7 +377,7 @@ Then in the playbook:
         host={{ inventory_hostname }}    # variable is from inventory file
         file=test_config.conf
         overwrite=false                # Add to existing configuration
-        user={{ juniper_user }}
+        user={{ junos_config_user }}
 
 This is a pretty cool way to assemble configs from parts then push them to Juniper gear:
 https://github.com/dgjnpr/ansible-template-for-junos
@@ -404,49 +404,66 @@ Install required Python library (handled in requirements.txt):
 
 ## SRX Configuration Methods
 
+To use rollback:
+
+    root@srx1-right> show system commit                  
+    0   2016-12-07 00:25:10 UTC by root via netconf
+        Pushing config ... please wait
+    1   2016-12-06 22:29:09 UTC by root via cli
+        Set up NETCONF over SSH
+    2   2016-12-06 20:15:23 UTC by root via cli
+        Initial configuration
+    3   2016-12-06 20:07:45 UTC by root via other
+
+    root@srx1-right> edit
+    Entering configuration mode
+
+    [edit]
+    root@srx1-right# rollback 1
+    load complete
+
+    [edit]
+    root@srx1-right# commit and-quit
+    commit complete
+    Exiting configuration mode
+
 ### SRX Redundant Ethernet Configuration
 
-# Redundancy Groups (0 for Routing Engine, 1 for reth interfaces)
-set chassis cluster redundancy-group 0 node 0 priority 100
-set chassis cluster redundancy-group 0 node 1 priority 1
-set chassis cluster redundancy-group 1 node 0 priority 100
-set chassis cluster redundancy-group 1 node 1 priority 1
-# preempt setting on would mean RG fails back to priority node when an interface recovers
-# reth interface monitoring
-# TODO is interface-monitor needed or useful in virt?
-# Note: The link status of VirtIO interfaces is always reported as UP, so a vSRX chassis cluster
-#       cannot receive link up and link down messages from VirtIO interfaces.
-# TODO should probably use IP monitoring here
-# Failed physical interfaces have their weight subtracted from the RG threshold of 255,
-# and failover happens when this reaches 0
-set chassis cluster redundancy-group 1 interface-monitor ge-0/0/1 weight 255
-set chassis cluster redundancy-group 1 interface-monitor ge-0/0/2 weight 255
-set chassis cluster redundancy-group 1 interface-monitor ge-7/0/1 weight 255
-set chassis cluster redundancy-group 1 interface-monitor ge-7/0/2 weight 255
-What about this?:
-set chassis cluster control-link-recovery
+Example Configuration:
 
-# reth interfaces (general)
-set chassis cluster reth-count <max-number>
-set interfaces <node0-interface-name> gigether-options redundant-parent reth0
-set interfaces <node1-interface-name> gigether-options redundant-parent reth0
-set interfaces reth0 redundant-ether-options redundancy-group <group-number>
-set interfaces reth0.0 family inet address <ip address/mask>
-set security zones security-zone <zone> interfaces reth0.0
+    # Redundancy Groups (0 for Routing Engine, 1 for reth interfaces)
+    set chassis cluster redundancy-group 0 node 0 priority 100
+    set chassis cluster redundancy-group 0 node 1 priority 1
+    set chassis cluster redundancy-group 1 node 0 priority 100
+    set chassis cluster redundancy-group 1 node 1 priority 1
+    # preempt setting on would mean RG fails back to priority node when an interface recovers
 
-# reth interfaces (single-host libvirt)
-# chassis cluster redundancy-group as above
-set chassis cluster reth-count 2
-set interfaces ge-0/0/1 gigether-options redundant-parent reth0
-set interfaces ge-7/0/1 gigether-options redundant-parent reth0
-set interfaces reth0 redundant-ether-options redundancy-group 1
-set interfaces reth0.0 family inet address 172.16.10.10/24
-set security zones security-zone trust interfaces reth0.0
-set interfaces ge-0/0/2 gigether-options redundant-parent reth1
-set interfaces ge-7/0/2 gigether-options redundant-parent reth1
-set interfaces reth1 redundant-ether-options redundancy-group 1
-set interfaces reth1.0 family inet address 172.16.100.10/24
-set security zones security-zone untrust interfaces reth1.0
+    # reth interfaces
+    set chassis cluster reth-count 2
+    set interfaces ge-0/0/1 gigether-options redundant-parent reth0
+    set interfaces ge-7/0/1 gigether-options redundant-parent reth0
+    set interfaces reth0 redundant-ether-options redundancy-group 1
+    set interfaces reth0.0 family inet address 172.16.10.10/24
+    set security zones security-zone trust interfaces reth0.0
+    set interfaces ge-0/0/2 gigether-options redundant-parent reth1
+    set interfaces ge-7/0/2 gigether-options redundant-parent reth1
+    set interfaces reth1 redundant-ether-options redundancy-group 1
+    set interfaces reth1.0 family inet address 172.16.100.10/24
+    set security zones security-zone untrust interfaces reth1.0
+
+    # reth interface monitoring (not used yet)
+    # TODO is interface-monitor needed or useful in virt?
+    # Note: The link status of VirtIO interfaces is always reported as UP, so a vSRX chassis cluster
+    #       cannot receive link up and link down messages from VirtIO interfaces.
+    # TODO should probably use IP monitoring here
+    # Failed physical interfaces have their weight subtracted from the RG threshold of 255,
+    # and failover happens when this reaches 0
+    set chassis cluster redundancy-group 1 interface-monitor ge-0/0/1 weight 255
+    set chassis cluster redundancy-group 1 interface-monitor ge-0/0/2 weight 255
+    set chassis cluster redundancy-group 1 interface-monitor ge-7/0/1 weight 255
+    set chassis cluster redundancy-group 1 interface-monitor ge-7/0/2 weight 255
+    # What about this?:
+    set chassis cluster control-link-recovery
 
 ### SRX Interfaces and zones
 

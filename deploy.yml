@@ -1,0 +1,51 @@
+---
+
+# Generate and apply configuration to devices.
+# Based on https://github.com/dgjnpr/ansible-template-for-junos
+
+# Clean up
+- name: Remove and re-create build directories for each host
+  hosts: all
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: remove host build temp directory
+      file: path={{ junos_build_dir }} state=absent
+      check_mode: no  # run even in check mode, so we can see
+    - name: create host build temp directory
+      file: path={{ junos_build_dir }} state=directory
+      check_mode: no  # run even in check mode, so we can see
+
+# SRX-specifics
+- name: Create and apply SRX configuration
+  hosts: vsrx
+  connection: local
+  gather_facts: no
+  roles:
+    - common
+    - srx
+
+# Assemble parts and commit
+# This task merges all the configuration fragments into one file
+# If merging the files results in a new file being created then a handler
+# is triggered to push the config onto the device.
+- name: Apply configuration
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: assembling configurations
+      assemble: src={{ junos_build_dir }} dest={{ junos_conf_file }}
+      notify:
+        - Pushing config ... please wait
+      delegate_to: localhost
+      check_mode: no  # run even in check mode, so we can see
+
+  handlers:
+    - name: Pushing config ... please wait
+      junos_template:
+        host: "{{ junos_config_hostname }}"
+        username: "{{ junos_config_user }}"
+        src: "{{ junos_conf_file }}"
+        action: overwrite
+      delegate_to: localhost
+      when: junos_commit is defined   # Use -e 'junos_commit=true' to run the commit

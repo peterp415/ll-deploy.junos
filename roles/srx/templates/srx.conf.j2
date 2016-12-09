@@ -1,0 +1,91 @@
+#jinja2:lstrip_blocks: True
+{# SRX Device Configuration #}
+
+{# Ethernet Interfaces, reth and their zones #}
+
+interfaces {
+  {% for interface in junos_interfaces %}
+  {{ interface.name }} {
+    unit 0 {
+      family inet {
+        address {{ interface.address }};
+      }
+    }
+  }
+  {% endfor %}
+  {% for interface in junos_cluster_reth_interfaces %}
+  {{ interface.name }} {
+    redundant-ether-options redundancy-group {{ interface.redundancy_group }};
+  }
+  {% for physical_interface in interface.physical_interfaces %}
+  {{ physical_interface }} {
+    gigether-options {
+      redundant-parent {{ interface.name }};
+    }
+  }
+  {% endfor %}
+  {% endfor %}
+}
+
+{% if junos_cluster_redundancy_groups or junos_cluster_reth_interfaces %}
+chassis {
+  cluster {
+    {% for group in junos_cluster_redundancy_groups %}
+    redundancy-group {{ group.number }} {
+      {% for node in group.nodes %}
+      node {{ node.id }} {
+        priority {{ node.priority }};
+      }
+      {% endfor %}
+    }
+    {% endfor %}
+    {% if junos_cluster_reth_interfaces %}
+    reth-count {{ junos_cluster_reth_interfaces|length() }};
+    {% endif %}
+  }
+}
+{% endif %}
+
+security {
+  zones {
+    {% for group in junos_interfaces|groupby('zone') %}
+    security-zone {{ group.grouper }} {
+      {% for interface in group.list %}
+        interfaces {{ interface.name }}
+      {% endfor %}
+    }
+    {% endfor %}
+  }
+}
+
+{# Policies #}
+
+security {
+  zones {
+    {% for zone in junos_zones %}
+    security-zone {{ zone.name }} {
+      {% for policy in zone.host_inbound_traffic %}
+      host-inbound-traffic {{ policy }};
+      {% endfor %}
+    }
+    {% endfor %}
+  }
+  policies {
+    {% for policy_group in junos_zone_security_policies %}
+    from-zone {{ policy_group.from_zone }} to-zone {{ policy_group.to_zone }} {
+      {% for policy in policy_group.policies %}
+      policy {{ policy.name }} {
+        match {
+          {% for match in policy.match %}
+          {{ match }};
+          {% endfor %}
+        }
+        then {
+          {{ policy.then }};
+        }
+      }
+      {% endfor %}
+    }
+    {% endfor %}
+  }
+}

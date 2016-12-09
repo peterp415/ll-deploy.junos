@@ -1,0 +1,13 @@
+[vsrx]
+
+[vsrx:children]
+vsrx-lab-left
+vsrx-lab-right
+
+[vsrx-lab-left]
+# cluster of srx1-left and srx2-left, managed via srx1-left IP
+srx1-left junos_config_hostname=host1.itlab.hq.wavemarket.com
+
+[vsrx-lab-right]
+# single system srx1-right
+srx1-right junos_config_hostname=host3.itlab.hq.wavemarket.com
