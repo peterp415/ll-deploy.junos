@@ -32,20 +32,35 @@
 - name: Apply configuration
   hosts: all
   gather_facts: no
+  roles:
+    - Juniper.junos
   tasks:
     - name: assembling configurations
       assemble: src={{ junos_build_dir }} dest={{ junos_conf_file }}
       notify:
-        - Pushing config ... please wait
+        - Commit configuration via NETCONF
+        # - Pushing config ... please wait
       delegate_to: localhost
       check_mode: no  # run even in check mode, so we can see
 
   handlers:
+
+    # This module is deprecated, and we have already templated anyway
     - name: Pushing config ... please wait
       junos_template:
         host: "{{ junos_config_hostname }}"
         username: "{{ junos_config_user }}"
+        #ssh_keyfile: "{{ junos_config_keyfile }}"  # works for vagrant user, not for secure key!
         src: "{{ junos_conf_file }}"
         action: overwrite
+      delegate_to: localhost
+      when: junos_commit is defined   # Use -e 'junos_commit=true' to run the commit
+
+    - name: Commit configuration via NETCONF
+      junos_install_config:
+        host: "{{ junos_config_hostname }}"
+        user: "{{ junos_config_user }}"  # This user's ssh key needs to be active
+        file: "{{ junos_conf_file }}"
+        overwrite: no
       delegate_to: localhost
       when: junos_commit is defined   # Use -e 'junos_commit=true' to run the commit

@@ -6,7 +6,10 @@ junos_build_dir: "{{ junos_build_root }}/{{ inventory_hostname }}/tmp"
 junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
 
 # JunOS settings
-junos_config_user: root
+# The Vagrant plugin vagrant-junos sets up ssh access as vagrant, so we will use it
+junos_config_user: "{{ ansible_ssh_user }}"
+# But NETCONF needs the key to be active, so be sure to
+#   ssh-add ~/.vagrant.d/insecure_private_key
 
 # Common template variables
 junos_location:

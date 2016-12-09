@@ -19,6 +19,7 @@ This is a deploy for a set of JunOS VPN endpoints that implement a site-to-site 
 ## Playbooks
 
 * deploy - Deploy to VPN endpoint systems
+  TODO: describe this more here
 
 ## Vagrant deploy - VirtualBox
 
@@ -29,7 +30,7 @@ and `vagrant-host-shell` plugins.  You will need to install these, for example:
 
 This Vagrant deploy creates a test environment:
 
-            ge-0/0/0 mgmt                                                  ge-0/0/0 mgmt
+            ge-0/0/0 Vagrant mgmt                                           ge-0/0/0 Vagrant mgmt
                  |                                                              |
            / srx1-left \                                                  / srx1-right \
        ge-0/0/1      ge-0/0/2 ------------  r1-middle  ------------  ge-0/0/2        ge-0/0/1
@@ -50,38 +51,47 @@ To bring up the environment:
 
     vagrant up
 
-JunOS Configuration Setup:
+Vagrant expects you to manage the devices through their ge-0/0/0 interfaces with its
+port forwarding etc.  For simplicity we are going to Ansible manage through the "internal"
+ge-0/0/1 interfaces via their static IPs on host-only networks.
 
-  # Set up bootstrap configuration on nodes, e.g.:
-  vagrant ssh srx1-left
-  root@vsrx> edit
+Log in to the SRX devices and set some bootstrap configuration to allow management via Ansible:
 
-  # interfaces
-  # set interfaces ... inet address is already done by vagrant-junos plugin
-  # set interfaces ge-0/0/1 unit 0 family inet address 172.16.10.10/24
-  set security zones security-zone trust interfaces ge-0/0/1.0
-  # set interfaces ge-0/0/2 unit 0 family inet address 172.16.100.20/24
-  set security zones security-zone untrust interfaces ge-0/0/2.0
-  # trust zone management traffic
-  set security zones security-zone trust host-inbound-traffic system-services ping
-  set security zones security-zone trust host-inbound-traffic system-services ssh
-  # Policies
-  set security policies from-zone untrust to-zone trust policy allow-ping
-  set security policies from-zone untrust to-zone trust policy allow-ping match source-address any
-  set security policies from-zone untrust to-zone trust policy allow-ping match destination-address any
-  set security policies from-zone untrust to-zone trust policy allow-ping match application junos-icmp-ping
-  set security policies from-zone untrust to-zone trust policy allow-ping then permit
-  insert security policies from-zone untrust to-zone trust policy allow-ping before policy default-deny
+    vagrant ssh srx1-left
+    root@srx1-left% cli
+    root@vsrx> edit
+    root@srx1-left.vagrant# set system services netconf ssh
+    root@srx1-left.vagrant# set security zones security-zone trust interfaces ge-0/0/1.0
+    root@srx1-left.vagrant# set security zones security-zone trust host-inbound-traffic system-services ping
+    root@srx1-left.vagrant# set security zones security-zone trust host-inbound-traffic system-services ssh
+    root@srx1-left.vagrant# set security zones security-zone trust host-inbound-traffic system-services netconf
+    root@srx1-left.vagrant# commit comment "Enable netconf management" and-quit
 
-  root@vsrx# show |compare
-  root@vsrx# commit check
-  root@vsrx# commit comment "Add interfaces"
-  root@vsrx# quit
+NETCONF needs the key to be active, so be sure to:
 
-Then ssh into the trust interface and test things out:
-  ssh -i ~/.vagrant.d/insecure_private_key root@172.16.20.10
+    ssh-add ~/.vagrant.d/insecure_private_key
 
-Next we will want to run an Ansible playbook to set up the interfaces and such.
+Note that these interface IP addresses are already set by the vagrant-junos plugin:
+
+    # set interfaces ge-0/0/1 unit 0 family inet address 172.16.10.10/24
+    # set interfaces ge-0/0/2 unit 0 family inet address 172.16.100.20/24
+
+Optionally, some untrust zone interface and handy policy settings would be:
+
+    set security zones security-zone untrust interfaces ge-0/0/2.0
+    set security policies from-zone untrust to-zone trust policy allow-ping
+    set security policies from-zone untrust to-zone trust policy allow-ping match source-address any
+    set security policies from-zone untrust to-zone trust policy allow-ping match destination-address any
+    set security policies from-zone untrust to-zone trust policy allow-ping match application junos-icmp-ping
+    set security policies from-zone untrust to-zone trust policy allow-ping then permit
+    insert security policies from-zone untrust to-zone trust policy allow-ping before policy default-deny
+
+Then you can ssh into the trust interface and test things out:
+
+    ssh -i ~/.vagrant.d/insecure_private_key vagrant@172.16.10.10  # srx1-left
+    ssh -i ~/.vagrant.d/insecure_private_key vagrant@172.16.20.10  # srx1-right
+
+Next we will want to run the Ansible deploy playbook to set up other interfaces, policies and such.
 
 
 ## KVM Deploy
@@ -97,7 +107,7 @@ Really good but does not address issues specific to vSRX.
 Docs on setting up a vSRX 15.1x49 (not Firefly) cluster under KVM are at:
 http://www.juniper.net/techpubs/en_US/vsrx15.1x49/topics/task/multi-task/security-vsrx-cluster-stage-provisioning-kvm.html
 
-Notes:
+Notes on interfaces:
 - All SRX devices use the fxp0 interface (adapter 1) for out-of-band management,
   this needs the virtio driver and `ifconfig <bridge-name> promisc`
 - Standalone devices will use:
@@ -426,6 +436,14 @@ To use rollback:
     root@srx1-right# commit and-quit
     commit complete
     Exiting configuration mode
+
+Verifying your changes:
+
+    root@vsrx# show |compare
+    root@vsrx# commit check
+    root@vsrx# commit comment "Add interfaces"
+    root@vsrx# quit
+
 
 ### SRX Redundant Ethernet Configuration
 

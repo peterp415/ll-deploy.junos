@@ -6,6 +6,7 @@ junos_build_dir: "{{ junos_build_root }}/{{ inventory_hostname }}/tmp"
 junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
 
 # JunOS settings
+# Be sure to install the Ansible user's key for root ssh access to SRX boxes
 junos_config_user: root
 
 # Common template variables

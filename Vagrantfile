@@ -36,12 +36,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   # We add private_network interfaces to these, which just create the host-only networks.
-  # The junos plugin would be needed to configure them.
+  # The junos plugin is needed to configure them.
   # Also note that the host gets the .1 addresses in these private nets.
   config.vm.define 'srx1-left' do |left|
     left.vm.box = "juniper/ffp-12.1X47-D20.7"
     left.vm.hostname = "srx1-left.vagrant"
-    left.vm.network "private_network", ip: "172.16.10.10",  virtualbox__intnet: "left-inside"
+    left.vm.network "private_network", ip: "172.16.10.10" #,  virtualbox__intnet: "left-inside"
     left.vm.network "private_network", ip: "172.16.100.20", virtualbox__intnet: "left-outside"
     left.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
   end
@@ -49,7 +49,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define 'middle' do |middle|
     middle.vm.box = "bento/ubuntu-14.04"
     middle.vm.hostname = "r1-middle.vagrant"
-    middle.vm.network "private_network", ip: "172.16.100.10", virtualbox__intnet: "left-outside"  #  eth1
+    middle.vm.network "private_network", ip: "172.16.100.10" #, virtualbox__intnet: "left-outside"  #  eth1
     middle.vm.network "private_network", ip: "172.16.200.10", virtualbox__intnet: "right-outside" #  eth2
     middle.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
   end
@@ -57,7 +57,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define 'srx1-right' do |right|
     right.vm.box = "juniper/ffp-12.1X47-D20.7"
     right.vm.hostname = "srx1-right.vagrant"
-    right.vm.network "private_network", ip: "172.16.20.10",  virtualbox__intnet: "right-inside"
+    right.vm.network "private_network", ip: "172.16.20.10" #,  virtualbox__intnet: "right-inside"
     right.vm.network "private_network", ip: "172.16.200.20", virtualbox__intnet: "right-outside"
     right.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
   end
