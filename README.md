@@ -59,13 +59,15 @@ Log in to the SRX devices and set some bootstrap configuration to allow manageme
 
     vagrant ssh srx1-left
     root@srx1-left% cli
-    root@vsrx> edit
-    root@srx1-left.vagrant# set system services netconf ssh
-    root@srx1-left.vagrant# set security zones security-zone trust interfaces ge-0/0/1.0
-    root@srx1-left.vagrant# set security zones security-zone trust host-inbound-traffic system-services ping
-    root@srx1-left.vagrant# set security zones security-zone trust host-inbound-traffic system-services ssh
-    root@srx1-left.vagrant# set security zones security-zone trust host-inbound-traffic system-services netconf
-    root@srx1-left.vagrant# commit comment "Enable netconf management" and-quit
+    root@srx1-left> edit
+
+    set system services netconf ssh
+    set security zones security-zone trust interfaces ge-0/0/1.0
+    set security zones security-zone trust host-inbound-traffic system-services ping
+    set security zones security-zone trust host-inbound-traffic system-services ssh
+    set security zones security-zone trust host-inbound-traffic system-services netconf
+
+    commit comment "Enable netconf management" and-quit
 
 NETCONF needs the key to be active, so be sure to:
 
@@ -94,6 +96,60 @@ Then you can ssh into the trust interface and test things out:
 Next we will want to run the Ansible deploy playbook to set up other interfaces, policies and such.
 
 
+Check, then deploy:
+
+    ansible-playbook -i inventory/vagrant/inventory deploy.yml --diff --check -e 'junos_commit=true' -l srx1-left
+    ansible-playbook -i inventory/vagrant/inventory deploy.yml --diff         -e 'junos_commit=true' -l srx1-left
+
+To bring up the tunnel:
+
+- The middle router will need:
+      echo "1" > /proc/sys/net/ipv4/ip_forward
+  add to a playbook with e.g.:
+      - name: Force sysctl line in /etc/sysctl.conf
+        lineinfile: dest=/etc/sysctl.conf line="net.ipv4.ip_forward = 1" insertafter=EOF state=present
+
+- Set routes down the tunnel, e.g. on srx1-left:
+      srx1-left:  set routing-options static route 172.16.20.0/24 next-hop st0.0
+      srx1-right: set routing-options static route 172.16.10.0/24 next-hop st0.0
+
+- Ping down the tunnel:
+      root@srx1-right.vagrant> ping 172.16.10.10
+
+Tunnel TODO:
+
+- Maybe set the key with plain text?
+    set security ike policy preshared pre-shared-key ascii-text "Wavemarket"
+
+- All you really need inbound is:
+    set security zones security-zone untrust host-inbound-traffic system-services ike
+
+- Set policies for traffic up/down the tunnel:
+    ## Security policies for tunnel traffic in outbound direction
+    set security policies from-zone trust to-zone vpn policy trust-vpn match source-address net_172-16-10-0--24
+    set security policies from-zone trust to-zone vpn policy trust-vpn match destination-address net_172-16-20-0--24
+    set security policies from-zone trust to-zone vpn policy trust-vpn match application any
+    set security policies from-zone trust to-zone vpn policy trust-vpn then permit
+    ## Security policies for tunnel traffic in inbound direction
+    set security policies from-zone vpn to-zone trust policy vpn-trust match source-address net_172-16-20-0--24
+    set security policies from-zone vpn to-zone trust policy vpn-trust match destination-address net_172-16-10-0--24
+    set security policies from-zone vpn to-zone trust policy vpn-trust match application any
+    set security policies from-zone vpn to-zone trust policy vpn-trust then permit
+
+
+### VPN Debug
+
+Set up a new syslog file:
+  set system syslog file kmd-logs daemon info
+  set system syslog file kmd-logs match KMD
+
+then try to bring up tunnel, and:
+  show log kmd-logs
+
+A bunch of useful commands here:
+http://batdosi.blogspot.com/2014/01/troubleshoot-juniper-srx-vpn.htmlhttp://batdosi.blogspot.com/2014/01/troubleshoot-juniper-srx-vpn.html
+
+
 ## KVM Deploy
 This section (and onwards) is still a work in progress, with _way_ too many notes.  It should probably be broken up into multiple files.
 
@@ -102,7 +158,7 @@ http://www.juniper.net/techpubs/en_US/vsrx15.1x49/information-products/pathway-p
 
 Branch SRX Active/Passive Cluster Implementation guide:
 https://kb.juniper.net/library/CUSTOMERSERVICE/technotes/8010055-EN.PDF
-Really good but does not address issues specific to vSRX.
+Really good, has VPN example, but does not address issues specific to vSRX.
 
 Docs on setting up a vSRX 15.1x49 (not Firefly) cluster under KVM are at:
 http://www.juniper.net/techpubs/en_US/vsrx15.1x49/topics/task/multi-task/security-vsrx-cluster-stage-provisioning-kvm.html
@@ -413,6 +469,9 @@ Install required Python library (handled in requirements.txt):
 
 
 ## SRX Configuration Methods
+
+VPN Configuration Generator:
+https://www.juniper.net/support/tools/vpnconfig/
 
 To use rollback:
 

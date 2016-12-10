@@ -1,7 +1,7 @@
 ---
 
 # Generate and apply configuration to devices.
-# Based on https://github.com/dgjnpr/ansible-template-for-junos
+# Based loosely on https://github.com/dgjnpr/ansible-template-for-junos
 
 # Clean up
 - name: Remove and re-create build directories for each host
@@ -11,25 +11,25 @@
   tasks:
     - name: remove host build temp directory
       file: path={{ junos_build_dir }} state=absent
-      check_mode: no  # run even in check mode, so we can see
+      check_mode: no  # run even in check mode, so we can see diffs
     - name: create host build temp directory
       file: path={{ junos_build_dir }} state=directory
-      check_mode: no  # run even in check mode, so we can see
+      check_mode: no  # run even in check mode, so we can see diffs
 
-# SRX-specifics
-- name: Create and apply SRX configuration
+# Template out configuration fragments, for common parts and device-specific parts
+- name: Create SRX configuration fragments
   hosts: vsrx
   connection: local
   gather_facts: no
   roles:
-    - common
-    - srx
+    - common  # Common configuration
+    - srx     # SRX-specifics
 
-# Assemble parts and commit
-# This task merges all the configuration fragments into one file
+# Assemble parts and apply to devices
+# The first task merges all the configuration fragments into one file.
 # If merging the files results in a new file being created then a handler
-# is triggered to push the config onto the device.
-- name: Apply configuration
+# is triggered to push the configuration onto the device.
+- name: Assemble and commit configuration
   hosts: all
   gather_facts: no
   roles:
@@ -41,7 +41,7 @@
         - Commit configuration via NETCONF
         # - Pushing config ... please wait
       delegate_to: localhost
-      check_mode: no  # run even in check mode, so we can see
+      check_mode: no  # run even in check mode, so we can see diffs
 
   handlers:
 

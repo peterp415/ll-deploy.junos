@@ -29,7 +29,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :virtualbox do |vb|
     # for troubleshooting cloud-init/vagrant/ubuntu issue (https://github.com/mitchellh/vagrant/issues/3860)
     # vb.gui = true
-    vb.customize ["modifyvm", :id, "--memory", 1024]
+    vb.customize ["modifyvm", :id, "--memory", 2048]
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     # For VirtualBox 5 NAT interface disconnected issue (see https://github.com/mitchellh/vagrant/issues/7648)
     vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
@@ -49,7 +49,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define 'middle' do |middle|
     middle.vm.box = "bento/ubuntu-14.04"
     middle.vm.hostname = "r1-middle.vagrant"
-    middle.vm.network "private_network", ip: "172.16.100.10" #, virtualbox__intnet: "left-outside"  #  eth1
+    middle.vm.network "private_network", ip: "172.16.100.10", virtualbox__intnet: "left-outside"  #  eth1
     middle.vm.network "private_network", ip: "172.16.200.10", virtualbox__intnet: "right-outside" #  eth2
     middle.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
   end

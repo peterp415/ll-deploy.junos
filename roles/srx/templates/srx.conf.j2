@@ -89,3 +89,54 @@ security {
     {% endfor %}
   }
 }
+
+{# VPNs #}
+
+{% if junos_ike_policies or security_ike_gateways %}
+security {
+  ike {
+    {% for policy in junos_ike_policies %}
+    policy {{ policy.name }} {
+      mode {{ policy.mode }};
+      proposal-set {{ policy.proposal_set }};
+      pre-shared-key {{ policy.pre_shared_key }};
+    }
+    {% endfor %}
+    {% for gw in junos_ike_gateways %}
+    gateway {{ gw.name }} {
+      ike-policy {{ gw.ike_policy }};
+      address {{ gw.address }};
+      external-interface {{ gw.external_interface }};
+    }
+    {% endfor %}
+  }
+}
+{% endif %}
+
+{% if junos_ipsec_policies or junos_ipsec_vpns %}
+security {
+  ipsec {
+    {% for policy in junos_ipsec_policies %}
+    policy {{ policy.name }} {
+      proposal-set {{ policy.proposal_set }};
+    }
+    {% endfor %}
+    {% for vpn in junos_ipsec_vpns %}
+    vpn {{ vpn.name }} {
+      bind-interface {{ vpn.bind_interface }};
+      ike {
+        gateway {{ vpn.ike_gateway }};
+        ipsec-policy {{ vpn.ike_ipsec_policy }};
+      }
+      establish-tunnels {{ vpn.establish_tunnels }};
+    }
+    {% endfor %}
+  }
+}
+{% endif %}
+
+
+{# Misc Blobs #}
+{% for blob in junos_config_blobs %}
+{{ blob.blob }}
+{% endfor %}
