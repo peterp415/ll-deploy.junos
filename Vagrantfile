@@ -29,7 +29,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :virtualbox do |vb|
     # for troubleshooting cloud-init/vagrant/ubuntu issue (https://github.com/mitchellh/vagrant/issues/3860)
     # vb.gui = true
-    vb.customize ["modifyvm", :id, "--memory", 2048]
+    vb.customize ["modifyvm", :id, "--memory", 512]
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     # For VirtualBox 5 NAT interface disconnected issue (see https://github.com/mitchellh/vagrant/issues/7648)
     vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
@@ -43,6 +43,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     left.vm.hostname = "srx1-left.vagrant"
     left.vm.network "private_network", ip: "172.16.10.10" #,  virtualbox__intnet: "left-inside"
     left.vm.network "private_network", ip: "172.16.100.20", virtualbox__intnet: "left-outside"
+    left.vm.provider :virtualbox do |vb|
+      # The SRX images need at least 2 GB RAM or they will fail by locking up.
+      vb.customize ["modifyvm", :id, "--memory", 4096]
+    end
     left.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
   end
 
@@ -59,6 +63,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     right.vm.hostname = "srx1-right.vagrant"
     right.vm.network "private_network", ip: "172.16.20.10" #,  virtualbox__intnet: "right-inside"
     right.vm.network "private_network", ip: "172.16.200.20", virtualbox__intnet: "right-outside"
+    right.vm.provider :virtualbox do |vb|
+      # The SRX images need at least 2 GB RAM or they will fail by locking up.
+      vb.customize ["modifyvm", :id, "--memory", 4096]
+    end
     right.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
   end
 

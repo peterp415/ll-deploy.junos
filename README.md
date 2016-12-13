@@ -27,7 +27,7 @@ types of virtual networks and the information about how JunOS works should be se
 
       ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true'
 
-  The `junos_commit` variable enables actually pusing configuration to the devices, otherwise
+  The `junos_commit` variable enables actually pushing configuration to the devices, otherwise
   configurations will be generated but the commit step will be skipped.
   You can use the usual `--check` and `--diff` flags as well.
 

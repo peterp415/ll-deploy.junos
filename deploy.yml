@@ -45,17 +45,6 @@
 
   handlers:
 
-    # This module is deprecated, and we have already templated anyway
-    - name: Pushing config ... please wait
-      junos_template:
-        host: "{{ junos_config_hostname }}"
-        username: "{{ junos_config_user }}"
-        #ssh_keyfile: "{{ junos_config_keyfile }}"  # works for vagrant user, not for secure key!
-        src: "{{ junos_conf_file }}"
-        action: overwrite
-      delegate_to: localhost
-      when: junos_commit is defined   # Use -e 'junos_commit=true' to run the commit
-
     - name: Commit configuration via NETCONF
       junos_install_config:
         host: "{{ junos_config_hostname }}"
