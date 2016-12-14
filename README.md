@@ -218,18 +218,20 @@ Cluster networking looks like this:
       Node 0 ----------------------- Node 1
              fab0  Fabric Link  fab1
 
-The single-host test deploy creates a test environment:
+The KVM dual-hypervisor test deploy creates a test environment:
 
-           / srx1-left \                                                  / srx1-right \
-       reth0.0       reth1.0  ------------  r1-middle  ------------  reth1.0         reth0.0
-    .10    \ srx2-left /    .20          .10         .10          .20     \ srx2-right /    .10
-    172.16.10.0/24          172.16.100.0/24          172.16.200.0/24             172.16.20.0/24
+           / srx1-left \                          / srx1-right \
+       reth0.0       reth1.0  ------------  ge-0/0/1.0      ge-0/0/0.0
+    .10    \ srx2-left /    .20          .30                         .10
+    172.16.10.0/24          172.16.100.0/24               172.16.20.0/24
 
-In this environment, the srx1,2-left cluster and srx1,2-right cluster form a VPN tunnel connecting
-their local networks, through the r1-middle host, which acts as a router.  The reth0.0 interfaces
+srx1-{left,right} run on hypervisor 1, srx2-left on hypervisor 2.
+
+In this environment, the srx1,2-left cluster and srx1-right standalone form a VPN tunnel connecting
+their local networks.  The interfaces in 172.16.100.0/24
 are the external VPN endpoints with "public" IPs.
 
-Would be good to have the option of trying an lo interface for the VPN endpoint as well.
+Would be good to also have the option of trying an lo interface for the VPN endpoint on a cluster.
 This is useful if for example the two SRX have separate reth interfaces for multiple upstreams.
 See https://forums.juniper.net/t5/SRX-Services-Gateway/IPSec-VPN-using-Reth-Interfaces-srx240/td-p/224877
 
@@ -635,6 +637,18 @@ To check network interfaces:
 
 
 ## Misc Notes
+
+### Configuation Management Problems
+
+When trying to update a VPN gateway IP address, we get the error:
+
+    fatal: [srx1-left -> localhost]: FAILED! => {"changed": false, "failed": true, "msg": "Unable to commit configuration: CommitError(edit_path: [edit security ike], bad_element: gateway, message: error: Gateway count should not be more than 1 if DPD is not enabled\nerror: configuration check-out failed)"}
+
+Had to change the IP manually with
+
+    delete security ike gateway <foo> address
+    set security ike gateway <foo> address <addr>
+
 
 ### Automatic VM Provisioning
 
