@@ -3,14 +3,81 @@
 # SRX template variables
 
 # Ethernet interfaces and their zones
-#  set interfaces ge-0/0/0 unit 0 family inet address 172.16.10.10/24
-#  set interfaces ge-0/0/1 unit 0 family inet address 172.16.100.10/24
-#  set security zones security-zone trust interfaces ge-0/0/0.0 host-inbound-traffic system-services all
+#  set interfaces ge-0/0/0 unit 0 family inet address 172.16.20.10/24
+#  set interfaces ge-0/0/1 unit 0 family inet address 172.16.200.20/24
+#  set security zones security-zone trust interfaces ge-0/0/0.0
 #  set security zones security-zone untrust interfaces ge-0/0/1.0
 junos_interfaces:
   - name: "ge-0/0/0"
-    address: "172.16.10.10/24"
+    address: "172.16.20.10/24"
     zone: "trust"
   - name: "ge-0/0/1"
-    address: "172.16.100.10/24"
+    # address: "172.16.200.20/24"  # when there is a middle box
+    address: "172.16.100.30/24"
     zone: "untrust"
+
+# IPSec: ike gateways
+#  set security ike gateway SRX5600 ike-policy preshared
+#  set security ike gateway SRX5600 address 10.10.1.40
+#  set security ike gateway SRX5600 external-interface reth0.0
+junos_ike_gateways:
+  - name: "srx1-left"
+    ike_policy: "preshared"
+    address: "172.16.100.20"
+    external_interface: "ge-0/0/1.0"
+
+# IPSec: ipsec vpns
+#  set security ipsec vpn SRX5600 bind-interface st0.0
+#  set security ipsec vpn SRX5600 ike gateway SRX5600
+#  set security ipsec vpn SRX5600 ike ipsec-policy std
+#  set security ipsec vpn SRX5600 establish-tunnels immediately
+junos_ipsec_vpns:
+  - name: "vsrx-link"
+    bind_interface: "st0.0"
+    ike_gateway: "srx1-left"
+    ike_ipsec_policy: "std"
+    establish_tunnels: "immediately"
+
+# IPSec: Route-based stN interfaces (put this in junos_interfaces?)
+#  set interfaces st0 unit 0 multipoint
+#  set interfaces st0 unit 0 family inet address 10.30.1.2/30
+#  set security-zones security-zone vpn interfaces st0.0
+# VPN Zone policies
+#  set security zones security-zone vpn host-inbound-traffic system-services all
+#  set security zones security-zone vpn host-inbound-traffic protocols all
+#  set security policies from-zone trust to-zone vpn policy any match source-address any
+#  set security policies from-zone trust to-zone vpn policy any match destination-address any
+#  set security policies from-zone trust to-zone vpn policy any match application any
+#  set security policies from-zone trust to-zone vpn policy any then permit
+junos_config_blobs:
+  # when there is a middle box
+  #  - name: "Set static routes across the middle"
+  #    blob: |
+  #        routing-options static route 172.16.100.0/24 next-hop 172.16.200.10;
+  - name: "Set static routes down the tunnel"
+    blob: |
+        routing-options static route 172.16.10.0/24 next-hop st0.0;
+  - name: "VPN Interface and Zone Policies"
+    blob: |
+        interfaces {
+          st0 unit 0 {
+            multipoint;
+            family inet address 10.30.1.2/30
+          }
+        }
+        security zones security-zone vpn {
+          host-inbound-traffic {
+            system-services all;
+            protocols all;
+          }
+        }
+        security policies from-zone trust to-zone vpn policy any {
+          match {
+            source-address any;
+            destination-address any;
+            application any;
+          }
+          then {
+            permit;
+          }
+        }

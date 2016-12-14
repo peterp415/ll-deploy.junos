@@ -69,23 +69,11 @@ junos_zone_security_policies:
 #  set security ike policy preshared proposal-set standard
 #  set security ike policy preshared pre-shared-key ascii-text "$9$w22oZHqfn/tUj/tuOcSwYg"
 #  set security ipsec policy std proposal-set standard
-# IPSec: ike gateways
-#  set security ike gateway SRX5600 ike-policy preshared
-#  set security ike gateway SRX5600 address 10.10.1.40
-#  set security ike gateway SRX5600 external-interface reth0.0
-# IPSec: ipsec vpns
-#  set security ipsec vpn SRX5600 bind-interface st0.0
-#  set security ipsec vpn SRX5600 ike gateway SRX5600
-#  set security ipsec vpn SRX5600 ike ipsec-policy std
-#  set security ipsec vpn SRX5600 establish-tunnels immediately
-# IPSec: Route-based stN interfaces (put this in junos_interfaces?)
-#  set interfaces st0 unit 0 multipoint
-#  set interfaces st0 unit 0 family inet address 10.30.1.1/30
-#  set security-zones security-zone vpn interfaces st0.0
-# VPN Zone policies
-#  set security zones security-zone vpn host-inbound-traffic system-services all
-#  set security zones security-zone vpn host-inbound-traffic protocols all
-#  set security policies from-zone trust to-zone vpn policy any match source-address any
-#  set security policies from-zone trust to-zone vpn policy any match destination-address any
-#  set security policies from-zone trust to-zone vpn policy any match application any
-#  set security policies from-zone trust to-zone vpn policy any then permit
+junos_ike_policies:
+  - name: "preshared"
+    mode: "main"
+    proposal_set: "standard"
+    pre_shared_key: 'ascii-text "swordfish"'
+junos_ipsec_policies:
+  - name: "std"
+    proposal_set: "standard"

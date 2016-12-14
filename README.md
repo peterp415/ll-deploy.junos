@@ -39,6 +39,8 @@ and `vagrant-host-shell` plugins.  You will need to install these, for example:
     vagrant plugin install vagrant-junos
     vagrant plugin install vagrant-host-shell
 
+The image from Juniper is their "firefly perimeter" device, running a JunOS 12.1 release.  The feature support matrix is at  http://www.juniper.net/techpubs/en_US/firefly12.1x46-d10/topics/reference/general/security-virtual-perimeter-feature-support-kvm.htmlhttp://www.juniper.net/techpubs/en_US/firefly12.1x46-d10/topics/reference/general/security-virtual-perimeter-feature-support-kvm.html
+
 Note: if you do not give the Vagrant guests enough RAM, they may boot but fail by locking up
 soon after.  Give them at least 2 GB RAM.
 
@@ -219,7 +221,7 @@ Cluster networking looks like this:
 The single-host test deploy creates a test environment:
 
            / srx1-left \                                                  / srx1-right \
-       reth1.0       reth0.0  ------------  r1-middle  ------------  reth0.0         reth1.0
+       reth0.0       reth1.0  ------------  r1-middle  ------------  reth1.0         reth0.0
     .10    \ srx2-left /    .20          .10         .10          .20     \ srx2-right /    .10
     172.16.10.0/24          172.16.100.0/24          172.16.200.0/24             172.16.20.0/24
 
