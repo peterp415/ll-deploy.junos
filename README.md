@@ -171,6 +171,10 @@ Tunnel TODO:
 
 ### VPN Debug
 
+For IKE traffic, see "How to analyze IKE Phase 1 VPN status messages" https://kb.juniper.net/InfoCenter/index?page=content&id=KB10101&actp=search
+
+Also, "How do I tell if a VPN Tunnel SA (Security Association) is active?" https://kb.juniper.net/InfoCenter/index?page=content&id=KB10090&actp=search
+
 Set up a new syslog file:
 
     set system syslog file kmd-logs daemon info
@@ -181,7 +185,7 @@ then try to bring up tunnel, and:
     show log kmd-logs
 
 A bunch of useful commands here:
-http://batdosi.blogspot.com/2014/01/troubleshoot-juniper-srx-vpn.htmlhttp://batdosi.blogspot.com/2014/01/troubleshoot-juniper-srx-vpn.html
+http://batdosi.blogspot.com/2014/01/troubleshoot-juniper-srx-vpn.html
 
 
 ## KVM Deploy
@@ -649,6 +653,7 @@ Had to change the IP manually with
     delete security ike gateway <foo> address
     set security ike gateway <foo> address <addr>
 
+We should just create the whole configuration and put it in with `junos_install_config` `replace: yes`
 
 ### Automatic VM Provisioning
 

@@ -92,14 +92,17 @@ security {
 
 {# VPNs #}
 
-{% if junos_ike_policies or security_ike_gateways %}
+{% if junos_ike_proposals or junos_ike_policies or security_ike_gateways %}
 security {
   ike {
+    {% for proposal in junos_ike_proposals %}
+    proposal {{ proposal.name }} {
+      {{ proposal.params }}
+    }
+    {% endfor %}
     {% for policy in junos_ike_policies %}
     policy {{ policy.name }} {
-      mode {{ policy.mode }};
-      proposal-set {{ policy.proposal_set }};
-      pre-shared-key {{ policy.pre_shared_key }};
+      {{ policy.params }}
     }
     {% endfor %}
     {% for gw in junos_ike_gateways %}

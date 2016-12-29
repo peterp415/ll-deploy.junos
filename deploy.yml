@@ -15,6 +15,9 @@
     - name: create host build temp directory
       file: path={{ junos_build_dir }} state=directory
       check_mode: no  # run even in check mode, so we can see diffs
+    - name: remove host build temp directory
+      file: path={{ junos_conf_file }} state=absent
+      check_mode: no  # run even in check mode, so we can see diffs
 
 # Template out configuration fragments, for common parts and device-specific parts
 - name: Create SRX configuration fragments

@@ -64,16 +64,33 @@ junos_zone_security_policies:
 
 # IPSec VPNs
 
-# IPsec: ike/ipsec policies
+# IPsec: ike/ipsec proposals and policies
 #  set security ike policy preshared mode main
 #  set security ike policy preshared proposal-set standard
 #  set security ike policy preshared pre-shared-key ascii-text "$9$w22oZHqfn/tUj/tuOcSwYg"
 #  set security ipsec policy std proposal-set standard
+junos_ike_proposals:
+  - name: "ike-proposal-vpntest1"
+    params: |
+      authentication-method pre-shared-keys;
+      dh-group group2;
+      authentication-algorithm sha1;
+      encryption-algorithm aes-128-cbc;
+
 junos_ike_policies:
+  # Standard, preshared key policy
   - name: "preshared"
-    mode: "main"
-    proposal_set: "standard"
-    pre_shared_key: 'ascii-text "swordfish"'
+    params: |
+      mode main;
+      proposal-set standard;
+      pre-shared-key ascii-text "swordfish";
+  # Custom policies
+  - name: "ike-policy-vpntest1"
+    params: |
+      mode main;
+      proposals ike-proposal-vpntest1;
+      pre-shared-key ascii-text "swordfish";
+
 junos_ipsec_policies:
   - name: "std"
     proposal_set: "standard"

@@ -21,7 +21,7 @@ junos_interfaces:
 #  set security ike gateway SRX5600 external-interface reth0.0
 junos_ike_gateways:
   - name: "srx1-right"
-    ike_policy: "preshared"
+    ike_policy: "ike-policy-vpntest1"
     address: "172.16.200.20"
     external_interface: "ge-0/0/2.0"
 
@@ -57,19 +57,30 @@ junos_config_blobs:
         routing-options static route 172.16.20.0/24 next-hop st0.0;
   - name: "VPN Interface and Zone Policies"
     blob: |
+        security flow tcp-mss ipsec-vpn mss 1420;
         interfaces {
           st0 unit 0 {
-            multipoint;
-            family inet address 10.30.1.1/30
+            family inet address 10.30.1.1/30;
           }
         }
         security zones security-zone vpn {
+          interfaces st0.0;
           host-inbound-traffic {
             system-services all;
             protocols all;
           }
         }
         security policies from-zone trust to-zone vpn policy any {
+          match {
+            source-address any;
+            destination-address any;
+            application any;
+          }
+          then {
+            permit;
+          }
+        }
+        security policies from-zone vpn to-zone trust policy any {
           match {
             source-address any;
             destination-address any;
