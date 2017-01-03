@@ -53,6 +53,6 @@
         host: "{{ junos_config_hostname }}"
         user: "{{ junos_config_user }}"  # This user's ssh key needs to be active
         file: "{{ junos_conf_file }}"
-        overwrite: no
+        overwrite: yes
       delegate_to: localhost
       when: junos_commit is defined   # Use -e 'junos_commit=true' to run the commit

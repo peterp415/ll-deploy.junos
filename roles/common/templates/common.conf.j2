@@ -2,3 +2,9 @@
 system {
     time-zone {{ junos_location.time_zone }};
 }
+
+{# Common Configuration Snippets #}
+{% for name,blob in junos_common_config.items() %}
+# Common Configuration: {{ name }}
+{{ blob }}
+{% endfor %}

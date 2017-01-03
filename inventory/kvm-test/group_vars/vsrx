@@ -10,17 +10,93 @@ junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
 junos_config_user: root
 
 # Common template variables
+
 junos_location:
   time_zone: PST
+
+junos_common_config:
+  # Management Authorization
+  management_auth: |
+    system {
+        root-authentication {
+            encrypted-password "$5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD";
+            ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCoeELibgrP7LBpFKChyotKddgZ2MwairR3Q0Ixul8NBHxpwrNi038RN13NHnUMK3AfTKeX+Ch4FcD3G9bQykUfzZNJ7JZHtbTvQ27adn6+HDOd14uckK7fCI2cpQ8/Bt6+H4U4K7ThWLMC9UsM+Mro4+PWBKM4n014Fi5k5KrfkW88rBhHM9uLLAX2e9/zcOafddSU9Zl5R68DLCgFIxzIdd2rL8sjye4s50avLHeX77az8hNQwdVSxd58TS+iXU3/PsFYkWSvL52WBQv+HXNRWieufO9vOdL5sBCE9kSHcz+LedyDDdJphqv+ZatWK1xOSiCTK8qeduqND+TXB84Es01NYGYad48h7tti0SU4HDcyw9gbkNKi2ktURZmL2rGPBfkdKFsNuh3PQntkgRx14NwvW8VHsf18vVM9tSmHOPahIUi4rQ1HPpAbDquoriva/rC9qVlgxJepzsGPOWXKGXSctUOQLVlCWaln9mKTFwo0wBIwrCcSeGTZL74MHhl1PsU0zQqAX800PUPDs/DXq3kQs/Pbf/sLQWV3c4dc3A8B1qWA2BWHKx3XdlXbO9SxOHiSxr2tnyNWpyR8xJ5ufaJXDSXV0/pbKaFyoW9zgqO50QX8tV7ETN48t1ANkz14yc27Homddn8I8JyPfN/B77zQwqVQOf9fKqMNTwXPCQ== peter.pletcher@peterpletcher-lt";
+        }
+        services {
+            ssh {
+                root-login allow;
+            }
+            netconf {
+                ssh;
+            }
+            web-management {
+                http {
+                    interface fxp0.0;
+                }
+            }
+        }
+      }
+  management_misc: |
+    version 15.1X49-D60.7;
+    system {
+        syslog {
+            user * {
+                any emergency;
+            }
+            file messages {
+                any any;
+                authorization info;
+            }
+            file interactive-commands {
+                interactive-commands any;
+            }
+        }
+        license {
+            autoupdate {
+                url https://ae1.juniper.net/junos/key_retrieval;
+            }
+        }
+    }
+    security {
+        screen {
+            ids-option untrust-screen {
+                icmp {
+                    ping-death;
+                }
+                ip {
+                    source-route-option;
+                    tear-drop;
+                }
+                tcp {
+                    syn-flood {
+                        alarm-threshold 1024;
+                        attack-threshold 200;
+                        source-threshold 1024;
+                        destination-threshold 2048;
+                        queue-size 2000; ## Warning: 'queue-size' is deprecated
+                        timeout 20;
+                    }
+                    land;
+                }
+            }
+        }
+        zones {
+            security-zone trust {
+                tcp-rst;
+            }
+            security-zone untrust {
+                screen untrust-screen;
+            }
+        }
+    }
 
 # SRX template variables
 
 # Policies and routes
 # Basic zones and traffic policies
-#  set security zones security-zone trust host-inbound-traffic system-services all
-#  set security zones security-zone trust host-inbound-traffic protocols all
-#  set security zones security-zone untrust host-inbound-traffic system-services all
-#  set security zones security-zone untrust host-inbound-traffic protocols all
+# FIXME: should be more like:
+#   `security zones security-zone trust host-inbound-traffic system-services` "ping", "ssh", "netconf"
+#   `security zones security-zone untrust host-inbound-traffic system-services` "ping", "ike"
 junos_zones:
   - name: "trust"
     host_inbound_traffic: ["system-services all", "protocols all"]

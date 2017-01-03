@@ -1,5 +1,74 @@
 ---
 
+# Common template variables
+
+# Host Names and Management Interface
+# Put management interface (e.g. fxp0 or ge-0/0/0), any global routing,
+# and hostname configuration in here.
+# Also define clustering interfaces if needed.
+junos_common_config:
+  # Management Interfaces
+  management_interfaces: |
+    groups {
+        node0 {
+            system {
+                host-name srx1-left;
+            }
+            interfaces {
+                fxp0 {
+                    unit 0 {
+                        family inet {
+                            address 10.38.31.37/27;
+                        }
+                    }
+                }
+            }
+        }
+        node1 {
+            system {
+                host-name srx2-left;
+            }
+            interfaces {
+                fxp0 {
+                    unit 0 {
+                        family inet {
+                            address 10.38.31.38/27;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    apply-groups "${node}";
+
+    interfaces {
+      fxp0 {
+          unit 0;
+      }
+    }
+    routing-options {
+        static {
+            route 0.0.0.0/0 next-hop 10.38.31.33;
+        }
+    }
+  cluster_interfaces: |
+    interfaces {
+      fab0 {
+          fabric-options {
+              member-interfaces {
+                  ge-0/0/0;
+              }
+          }
+      }
+      fab1 {
+          fabric-options {
+              member-interfaces {
+                  ge-7/0/0;
+              }
+          }
+      }
+    }
+
 # SRX template variables
 
 # Ethernet interfaces and their zones

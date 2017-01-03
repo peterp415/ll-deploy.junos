@@ -1,5 +1,27 @@
 ---
 
+# Common template variables
+
+# Host Names and Management Interface
+# Put management interface (e.g. fxp0 or ge-0/0/0), any global routing,
+# and hostname configuration in here.
+# Also define clustering interfaces if needed.
+junos_common_config:
+  # Management Interfaces
+  management_interfaces: |
+    system {
+        host-name srx1-left.vagrant;
+    }
+    interfaces {
+        ge-0/0/0 {
+            unit 0 {
+                family inet {
+                    dhcp;
+                }
+            }
+        }
+    }
+
 # SRX template variables
 
 # Ethernet interfaces and their zones
