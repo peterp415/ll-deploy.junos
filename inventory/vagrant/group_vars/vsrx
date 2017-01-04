@@ -23,6 +23,7 @@ junos_common_config:
         root-authentication {
             encrypted-password "$5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD";
             ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDb4LFNJ/pR3SzkSHomEm5v+JkTq75PR8le5osLl8IcrA9yZRCePZb5xLmxmbKWuamlfgVYyiTgMdAs2i6ZBuLVpuHxgPVRNHfHSeMap23Za1P2eI7zmRqU4U1Ljo6XnO3OExrt6nfQNqMDSK+JHxCa4VgBTjg2A7h0NeoTq9cotoRQsdDCtY7OfZ+iMESSJ10yZLQQmQzw7m3yZXLvVhQJoHwD3Zrv4wuX20vh19LM9X3yQOT9OKCAd0DSbELxrHtUcFnXpZ8rwJlLkataCgsqex1r7e+MmgPhwrC2my7KBvWYOeGseb4hLBn5qZtvVDa9ChuTQmukg/UV3UqJF6LV vagrant";
+            ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDoGQ8mmQdVCJ5kG6SCGOq8hYalSKQU/fWUUJKDPCDV7Nfm5yq9pg3M4d+EHLkiUOjOGw0+rPitCgWMEB+iWyqoAtmF00rVAcdUApKNPSisErdYJr88+rGCRvtMyOs5AbSVdVuJogB7iLfJEccL3GpdcuJBPoMmFCCmx3lpNaLWULkqmhh9P0TbmImWhrWxCQ5I1fhkqi+ycQ4JGgmLHAzAbdLjjMUc2cdSDNY6+H24LYHEHe0KMzOtzSU5zpDyDvg6Kr8sNvfa9zV3iaLRTrC8rbu3Ir2rhHHbABwK3p+zKsW3N3h2UvBtkf+Dh0r6qq+u6HFmLgyF1+49uvLlDhaR vagrant";
         }
         services {
             ssh {

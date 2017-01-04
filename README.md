@@ -68,8 +68,8 @@ Running a random shell script on these images results in "Authentication error".
 
 To automatically provision, we'd have to use something like an extension of the
 `vagrant-host-shell` or `vagrant-junos` Vagrant plugins (using the vagrant communication channel)
-or something like pexpect.  See https://gist.github.com/DoriftoShoes/b98d89d2c339c10c952164d6eab63eec
-for an example of the latter.
+or something like expect or pexpect.
+See expect ### Automatic VM Provisioning below.
 
 To bring up the environment:
 
@@ -119,6 +119,13 @@ Then you can ssh into the trust interface and test things out:
 
 Next we will want to run the Ansible deploy playbook to set up other interfaces, policies and such.
 
+TODO: Where do the Vagrants get their key for root ssh, as configured in:
+    system root-authentication ssh-rsa
+Looks like there are keys in ./.vagrant/machines/<name>/virtualbox/private_key
+that correspond to what gets put into root-authentication, but where to get
+the other half for future configuration?
+I think this is done with config.ssh.insert_key = true (default), which
+"will automatically insert a keypair to use for SSH, replacing Vagrant's default insecure key inside the machine if detected."
 
 Check, then deploy:
 
@@ -135,11 +142,6 @@ To bring up the tunnel:
 
       - name: Force sysctl line in /etc/sysctl.conf
         lineinfile: dest=/etc/sysctl.conf line="net.ipv4.ip_forward = 1" insertafter=EOF state=present
-
-- Set routes down the tunnel, e.g. on srx1-left do:
-
-      srx1-left:  set routing-options static route 172.16.20.0/24 next-hop st0.0
-      srx1-right: set routing-options static route 172.16.10.0/24 next-hop st0.0
 
 - Ping down the tunnel to generate traffic:
 
@@ -642,20 +644,9 @@ To check network interfaces:
 
 ## Misc Notes
 
-### Configuation Management Problems
-
-When trying to update a VPN gateway IP address, we get the error:
-
-    fatal: [srx1-left -> localhost]: FAILED! => {"changed": false, "failed": true, "msg": "Unable to commit configuration: CommitError(edit_path: [edit security ike], bad_element: gateway, message: error: Gateway count should not be more than 1 if DPD is not enabled\nerror: configuration check-out failed)"}
-
-Had to change the IP manually with
-
-    delete security ike gateway <foo> address
-    set security ike gateway <foo> address <addr>
-
-We should just create the whole configuration and put it in with `junos_install_config` `replace: yes`
-
 ### Automatic VM Provisioning
+
+https://jira.locationlabs.com/browse/IG-4276
 
 One possibility: run an expect script on the console, as in
 https://github.com/lamoni/vztp-vsrx/blob/master/scripts/instantiate_new_srx.py
@@ -666,6 +657,10 @@ which sets:
 - netconf over ssh
 - ge-0/0/0.0 untrust, IP addr
 - default route
+
+See https://gist.github.com/DoriftoShoes/b98d89d2c339c10c952164d6eab63eec
+for an example of using pexpect.
+
 
 ### Using Artifactory
 
