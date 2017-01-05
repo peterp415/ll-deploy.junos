@@ -69,7 +69,7 @@ Running a random shell script on these images results in "Authentication error".
 To automatically provision, we'd have to use something like an extension of the
 `vagrant-host-shell` or `vagrant-junos` Vagrant plugins (using the vagrant communication channel)
 or something like expect or pexpect.
-See expect ### Automatic VM Provisioning below.
+See expect Automatic VM Provisioning below.
 
 To bring up the environment:
 
@@ -530,7 +530,7 @@ Install required Python library (handled in requirements.txt):
 VPN Configuration Generator:
 https://www.juniper.net/support/tools/vpnconfig/
 
-To use rollback:
+To use rollback, enacting a previous state:
 
     root@srx1-right> show system commit                  
     0   2016-12-07 00:25:10 UTC by root via netconf
@@ -552,6 +552,10 @@ To use rollback:
     root@srx1-right# commit and-quit
     commit complete
     Exiting configuration mode
+
+You can also check diffs between previous commits with:
+
+    root@srx1-right> show system rollback compare 1 0
 
 Verifying your changes:
 

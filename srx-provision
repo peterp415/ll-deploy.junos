@@ -1,0 +1,108 @@
+#!/usr/bin/python
+#
+# Provision a Juniper SRX system to be ready for management via NETCONF
+#
+# Usage:
+#   srx-provision <connect_str> <username> <password>
+# for example:
+#   ./srx-provision "vagrant ssh srx1-left" root password
+#
+# This uses pexpect, which on Ubuntu is obtained with:
+#   apt-get install python-pexpect
+
+import sys, pexpect
+
+
+class JuniperSRX():
+
+    def __init__(self, connect_str, username, password):
+        self.connect_str = connect_str
+        self.username = username
+        self.password = password
+
+    # Utility functions
+    def expect_command_prompt(self):
+        self.child.expect("%s@.*%%" % self.username)
+    def expect_cli_prompt(self):
+        self.child.expect("%s@.*>" % self.username)
+    def expect_configure_prompt(self):
+        self.child.expect("%s@.*#" % self.username)
+
+    def connect(self):
+        # Connect with an account that has SSH key access to the command line
+        self.child = pexpect.spawn(self.connect_str)
+        if 0:  # FIXME handle cases where we need to log in
+            self.login()
+        self.expect_command_prompt()
+        # Now at the command line, start CLI
+        self.child.sendline('cli\r')
+        self.expect_cli_prompt()
+
+    def login(self):
+        self.child.expect('?')
+        self.child.sendline('\r')
+        self.child.expect('.*ogin')
+        self.child.sendline(self.username)
+        self.child.expect('.*assword:.*')
+        self.child.sendline(self.password)
+        self.child.sendline('\r')
+
+    def configure(self, configs, comment):
+        # Configure a connected device with the list of configuation commands,
+        # and commit with the provided comment message.
+        self.child.sendline('edit\r')
+        self.expect_configure_prompt()
+        for config in configs:
+            self.child.sendline("%s\r" % config)
+            self.expect_configure_prompt()
+        self.child.sendline("commit comment \"%s\" and-quit\r" % comment)
+        self.expect_cli_prompt()
+
+if __name__ == '__main__':
+    ( connect_str, username, password ) = ( sys.argv[1], sys.argv[2], sys.argv[3] )
+    srx = JuniperSRX(connect_str, username, password)
+    srx.connect()
+    if 1:  # FIXME if we are provisioning a Vagrant
+        # Configure trust zone interface for netconf management
+        configs = [
+        "set system services netconf ssh",
+        "set security zones security-zone trust interfaces ge-0/0/1.0",
+        "set security zones security-zone trust host-inbound-traffic system-services ping",
+        "set security zones security-zone trust host-inbound-traffic system-services ssh",
+        "set security zones security-zone trust host-inbound-traffic system-services netconf",
+        ]
+        srx.configure(configs=configs,comment="Enable netconf management via pexpect")
+
+    # Perhaps common settings here:
+    # srx.configure(configs=["set system time-zone PDT"],comment="Commited by pexpect")
+
+    # Any clean up goes here
+
+#
+# Implementation Notes:
+#
+# For Vagrants, the login and configure looks like:
+# $ vagrant ssh srx1-left
+# --- JUNOS 12.1X47-D20.7 built 2015-03-03 21:53:50 UTC
+# root@srx1-left% cli
+# root@srx1-left.vagrant> edit
+# Entering configuration mode
+#
+# [edit]
+# root@srx1-left.vagrant# set system time-zone UTC
+#
+# [edit]
+# root@srx1-left.vagrant# commit comment "Set time zone to UTC" and-quit
+# commit complete
+# Exiting configuration mode
+#
+# root@srx1-left.vagrant>
+
+# Vagrant SRX configuration needed is:
+#
+# set system services netconf ssh
+# set security zones security-zone trust interfaces ge-0/0/1.0
+# set security zones security-zone trust host-inbound-traffic system-services ping
+# set security zones security-zone trust host-inbound-traffic system-services ssh
+# set security zones security-zone trust host-inbound-traffic system-services netconf
+# commit comment "Enable netconf management" and-quit
