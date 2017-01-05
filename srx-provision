@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Provision a Juniper SRX system to be ready for management via NETCONF
 #
@@ -7,7 +7,7 @@
 # for example:
 #   ./srx-provision "vagrant ssh srx1-left" root password
 #
-# This uses pexpect, which on Ubuntu is obtained with:
+# This uses pexpect, which on Ubuntu is obtained via pip or globally with:
 #   apt-get install python-pexpect
 
 import sys, pexpect
