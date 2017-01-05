@@ -41,9 +41,6 @@ and `vagrant-host-shell` plugins.  You will need to install these, for example:
 
 The image from Juniper is their "firefly perimeter" device, running a JunOS 12.1 release.  The feature support matrix is at  http://www.juniper.net/techpubs/en_US/firefly12.1x46-d10/topics/reference/general/security-virtual-perimeter-feature-support-kvm.htmlhttp://www.juniper.net/techpubs/en_US/firefly12.1x46-d10/topics/reference/general/security-virtual-perimeter-feature-support-kvm.html
 
-Note: if you do not give the Vagrant guests enough RAM, they may boot but fail by locking up
-soon after.  Give them at least 2 GB RAM.
-
 This Vagrant deploy creates a test environment:
 
             ge-0/0/0 Vagrant mgmt                                           ge-0/0/0 Vagrant mgmt
@@ -61,76 +58,43 @@ are external VPN endpoints with "public" IPs.
 
 The `vagrant-junos` plugin (https://github.com/JNPRAutomate/vagrant-junos) provides for
 network interface and ssh key provisioning, based off the standard vagrant configuration
-items `config.vm.network` and `config.ssh.private_key_path`
+items such as `config.vm.network` and `config.ssh.private_key_path`.  So the Vagrant-defined
+network interfaces and default "insecure public key" will be set up automatically.
 
-Note that the standard Vagrant shell provisioner does not work for JunOS guests.
-Running a random shell script on these images results in "Authentication error".
-
-To automatically provision, we'd have to use something like an extension of the
-`vagrant-host-shell` or `vagrant-junos` Vagrant plugins (using the vagrant communication channel)
-or something like expect or pexpect.
-See expect Automatic VM Provisioning below.
+To complete the provisioning setup, we use a python-pexpect script to set up the management
+interface.  For details see Automatic VM Provisioning below.
 
 To bring up the environment:
 
     vagrant up
 
-Vagrant expects you to manage the devices through their `ge-0/0/0` interfaces with its
-port forwarding etc.  For simplicity we are going to Ansible manage through the "internal"
-`ge-0/0/1` interfaces via their static IPs on host-only networks.
-
-Log in to the SRX devices and set some bootstrap configuration to allow management via Ansible:
-
-    vagrant ssh srx1-left
-    root@srx1-left% cli
-    root@srx1-left> edit
-
-    set system services netconf ssh
-    set security zones security-zone trust interfaces ge-0/0/1.0
-    set security zones security-zone trust host-inbound-traffic system-services ping
-    set security zones security-zone trust host-inbound-traffic system-services ssh
-    set security zones security-zone trust host-inbound-traffic system-services netconf
-
-    commit comment "Enable netconf management" and-quit
-
-NETCONF needs the ssh key to be active, so be sure to:
+NETCONF over SSH via Ansible needs the Vagrant ssh key to be active, so be sure to:
 
     ssh-add ~/.vagrant.d/insecure_private_key
 
-Note that these interface IP addresses are already set by the `vagrant-junos` plugin:
+Vagrant expects you to manage the devices through their dhcp-configured `ge-0/0/0` interfaces,
+using its keys, port forwarding etc.  For simplicity we are going to Ansible manage through the
+"internal" `ge-0/0/1` interfaces via their static IPs on host-only networks.
 
-    # set interfaces ge-0/0/1 unit 0 family inet address 172.16.10.10/24
-    # set interfaces ge-0/0/2 unit 0 family inet address 172.16.100.20/24
+Use the `srx-provision` provisioning script to set some bootstrap configuration that allows
+this.  We just provide a dummy password since SSH keys are already in the image:
 
-Optionally, some untrust zone interface and policy settings handy for debugging might be:
+  ./srx-provision "vagrant ssh srx1-left" root dummypw
+  ./srx-provision "vagrant ssh srx1-right" root dummypw
 
-    set security zones security-zone untrust interfaces ge-0/0/2.0
-    set security policies from-zone untrust to-zone trust policy allow-ping
-    set security policies from-zone untrust to-zone trust policy allow-ping match source-address any
-    set security policies from-zone untrust to-zone trust policy allow-ping match destination-address any
-    set security policies from-zone untrust to-zone trust policy allow-ping match application junos-icmp-ping
-    set security policies from-zone untrust to-zone trust policy allow-ping then permit
-    insert security policies from-zone untrust to-zone trust policy allow-ping before policy default-deny
-
-Then you can ssh into the trust interface and test things out:
+Then you can ssh into the devices via their trust interface and test things out:
 
     ssh -i ~/.vagrant.d/insecure_private_key vagrant@172.16.10.10  # srx1-left
     ssh -i ~/.vagrant.d/insecure_private_key vagrant@172.16.20.10  # srx1-right
 
 Next we will want to run the Ansible deploy playbook to set up other interfaces, policies and such.
 
-TODO: Where do the Vagrants get their key for root ssh, as configured in:
-    system root-authentication ssh-rsa
-Looks like there are keys in ./.vagrant/machines/<name>/virtualbox/private_key
-that correspond to what gets put into root-authentication, but where to get
-the other half for future configuration?
-I think this is done with config.ssh.insert_key = true (default), which
-"will automatically insert a keypair to use for SSH, replacing Vagrant's default insecure key inside the machine if detected."
+### SRX Vagrant VM Deployment
 
 Check, then deploy:
 
-    ansible-playbook -i inventory/vagrant/inventory deploy.yml --diff --check -e 'junos_commit=true' -l srx1-left
-    ansible-playbook -i inventory/vagrant/inventory deploy.yml --diff         -e 'junos_commit=true' -l srx1-left
+    ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-left --diff --check
+    ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-left
 
 To bring up the tunnel:
 
@@ -147,13 +111,13 @@ To bring up the tunnel:
 
       root@srx1-right.vagrant> ping 172.16.10.10
 
-Tunnel TODO:
+Tunnel deployment TODO:
 
 - Maybe set the key with plain text?
 
       set security ike policy preshared pre-shared-key ascii-text "Wavemarket"
 
-- All you really need inbound is:
+- Tighten untrust inbound traffic policy.  All you really need inbound is:
 
       set security zones security-zone untrust host-inbound-traffic system-services ike
 
@@ -645,25 +609,73 @@ To check network interfaces:
     vnet5      network    srx_left_in virtio      52:54:00:e3:79:3c
     vnet6      network    srx_left_out virtio      52:54:00:04:ed:47
 
+Some untrust zone interface and policy settings handy for debugging might be:
+
+    set security zones security-zone untrust interfaces ge-0/0/2.0
+    set security policies from-zone untrust to-zone trust policy allow-ping
+    set security policies from-zone untrust to-zone trust policy allow-ping match source-address any
+    set security policies from-zone untrust to-zone trust policy allow-ping match destination-address any
+    set security policies from-zone untrust to-zone trust policy allow-ping match application junos-icmp-ping
+    set security policies from-zone untrust to-zone trust policy allow-ping then permit
+    insert security policies from-zone untrust to-zone trust policy allow-ping before policy default-deny
+
 
 ## Misc Notes
 
 ### Automatic VM Provisioning
 
-https://jira.locationlabs.com/browse/IG-4276
+We need to set some bootstrap configuration to allow management via Ansible.
+See https://jira.locationlabs.com/browse/IG-4276
 
-One possibility: run an expect script on the console, as in
-https://github.com/lamoni/vztp-vsrx/blob/master/scripts/instantiate_new_srx.py
-running the expect script at
-https://github.com/lamoni/vztp-vsrx/blob/master/console-config.exp
-which sets:
-- root password
-- netconf over ssh
-- ge-0/0/0.0 untrust, IP addr
-- default route
+For example, in Vagrants we set up the "internal" ge-0/0/1 interface to allow netconf.
 
-See https://gist.github.com/DoriftoShoes/b98d89d2c339c10c952164d6eab63eec
-for an example of using pexpect.
+This is done with the `srx-provision` script, using pexpect to log in and issue configuration
+commands.
+
+Note that the standard Vagrant shell provisioner does not work for JunOS guests.
+Running a random shell script on these images results in "Authentication error".
+
+The manual steps for Vagrants look like:
+
+    vagrant ssh srx1-left
+    root@srx1-left% cli
+    root@srx1-left> edit
+
+    set system services netconf ssh
+    set security zones security-zone trust interfaces ge-0/0/1.0
+    set security zones security-zone trust host-inbound-traffic system-services ping
+    set security zones security-zone trust host-inbound-traffic system-services ssh
+    set security zones security-zone trust host-inbound-traffic system-services netconf
+
+    commit comment "Enable netconf management" and-quit
+
+### Vagrant SSH Configuration
+
+In Vagrants, `config.ssh.insert_key = true` is the default, which
+
+  "will automatically insert a keypair to use for SSH, replacing Vagrant's default
+  insecure key inside the machine if detected."
+
+Creation-time messages about this look like:
+
+    srx1-prov: Vagrant insecure key detected. Vagrant will automatically replace
+    srx1-prov: this with a newly generated keypair for better security.
+
+When this is done, there are keys in
+
+  ./.vagrant/machines/<name>/virtualbox/private_key
+
+that correspond to what the `vagrant-junos` plugin puts into
+
+    system root-authentication ssh-rsa
+
+but where to get the Vagrant half of this for future configuration?  Would we have to
+pull it out and add it to the configuration templates?  Bah.
+
+Turning off `config.ssh.insert_key` leaves root to use the insecure public key.
+
+Note: Vagrants also get a "vagrant" user with the "vagrant insecure public key"
+(I believe this is built into the box image).
 
 
 ### Using Artifactory
@@ -714,6 +726,76 @@ Downloading in playbook, e.g. in `ansible/roles/ldap-account-manager/tasks/setup
     set security zones security-zone trust tcp-rst
     set security zones security-zone untrust screen untrust-screen
     set interfaces fxp0 unit 0
+
+### Default Vagrant vSRX Configuration
+
+Using Vagrantfile settings:
+
+    config.vm.define 'srx1-prov' do |prov|
+      prov.vm.box = "juniper/ffp-12.1X47-D20.7"
+      prov.vm.hostname = "srx1-prov.vagrant"
+      prov.vm.network "private_network", ip: "172.16.20.15" #,  virtualbox__intnet: "right-inside"
+      prov.vm.network "private_network", ip: "172.16.200.25", virtualbox__intnet: "right-outside"
+      prov.vm.provider :virtualbox do |vb|
+        # The SRX images need 4 GB RAM or they will fail by locking up.
+        vb.customize ["modifyvm", :id, "--memory", 4096]
+      end
+      prov.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
+      config.ssh.insert_key = false  # Do not add a unique custom-generated key
+    end
+
+Resulting configuration:
+
+    --- JUNOS 12.1X47-D20.7 built 2015-03-03 21:53:50 UTC
+    root@srx1-prov% id
+    uid=0(root) gid=0(wheel) groups=0(wheel), 5(operator), 10(field), 31(guest), 73(config)
+    root@srx1-prov% cli
+    root@srx1-prov.vagrant> show configuration |display set|no-more
+    set version 12.1X47-D20.7
+    set system host-name srx1-prov.vagrant
+    set system root-authentication encrypted-password "$1$mlDmfntY$/M/6mBwINHGXPq84FH1Bf1"
+    set system root-authentication ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"
+    set system login user vagrant uid 2000
+    set system login user vagrant class super-user
+    set system login user vagrant authentication ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"
+    set system services ssh root-login allow
+    set system services netconf ssh
+    set system services web-management http interface ge-0/0/0.0
+    set system syslog user * any emergency
+    set system syslog file messages any any
+    set system syslog file messages authorization info
+    set system syslog file interactive-commands interactive-commands any
+    set system license autoupdate url https://ae1.juniper.net/junos/key_retrieval
+    set interfaces ge-0/0/0 unit 0 family inet dhcp
+    set interfaces ge-0/0/1 unit 0 family inet address 172.16.20.15/24
+    set interfaces ge-0/0/2 unit 0 family inet address 172.16.200.25/24
+    set security screen ids-option untrust-screen icmp ping-death
+    set security screen ids-option untrust-screen ip source-route-option
+    set security screen ids-option untrust-screen ip tear-drop
+    set security screen ids-option untrust-screen tcp syn-flood alarm-threshold 1024
+    set security screen ids-option untrust-screen tcp syn-flood attack-threshold 200
+    set security screen ids-option untrust-screen tcp syn-flood source-threshold 1024
+    set security screen ids-option untrust-screen tcp syn-flood destination-threshold 2048
+    set security screen ids-option untrust-screen tcp syn-flood queue-size 2000
+    set security screen ids-option untrust-screen tcp syn-flood timeout 20
+    set security screen ids-option untrust-screen tcp land
+    set security policies from-zone trust to-zone trust policy default-permit match source-address any
+    set security policies from-zone trust to-zone trust policy default-permit match destination-address any
+    set security policies from-zone trust to-zone trust policy default-permit match application any
+    set security policies from-zone trust to-zone trust policy default-permit then permit
+    set security policies from-zone trust to-zone untrust policy default-permit match source-address any
+    set security policies from-zone trust to-zone untrust policy default-permit match destination-address any
+    set security policies from-zone trust to-zone untrust policy default-permit match application any
+    set security policies from-zone trust to-zone untrust policy default-permit then permit
+    set security policies from-zone untrust to-zone trust policy default-deny match source-address any
+    set security policies from-zone untrust to-zone trust policy default-deny match destination-address any
+    set security policies from-zone untrust to-zone trust policy default-deny match application any
+    set security policies from-zone untrust to-zone trust policy default-deny then deny
+    set security zones functional-zone management interfaces ge-0/0/0.0 host-inbound-traffic system-services all
+    set security zones functional-zone management interfaces ge-0/0/0.0 host-inbound-traffic protocols all
+    set security zones security-zone trust tcp-rst
+    set security zones security-zone untrust screen untrust-screen
+
 
 ### Boot Messages
 

@@ -26,6 +26,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     raise "** Install vagrant-host-shell plugin `vagrant plugin install vagrant-host-shell`.**\n"
   end
 
+  config.ssh.insert_key = false  # Do not add a unique custom-generated key
+
   config.vm.provider :virtualbox do |vb|
     # for troubleshooting cloud-init/vagrant/ubuntu issue (https://github.com/mitchellh/vagrant/issues/3860)
     # vb.gui = true
@@ -44,7 +46,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     left.vm.network "private_network", ip: "172.16.10.10" #,  virtualbox__intnet: "left-inside"
     left.vm.network "private_network", ip: "172.16.100.20", virtualbox__intnet: "left-outside"
     left.vm.provider :virtualbox do |vb|
-      # The SRX images need at least 2 GB RAM or they will fail by locking up.
+      # The SRX images need 4 GB RAM or they will fail by locking up.
       vb.customize ["modifyvm", :id, "--memory", 4096]
     end
     left.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
@@ -64,7 +66,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     right.vm.network "private_network", ip: "172.16.20.10" #,  virtualbox__intnet: "right-inside"
     right.vm.network "private_network", ip: "172.16.200.20", virtualbox__intnet: "right-outside"
     right.vm.provider :virtualbox do |vb|
-      # The SRX images need at least 2 GB RAM or they will fail by locking up.
+      # The SRX images need 4 GB RAM or they will fail by locking up.
       vb.customize ["modifyvm", :id, "--memory", 4096]
     end
     right.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
