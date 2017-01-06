@@ -84,8 +84,8 @@ this.  We just provide a dummy password since SSH keys are already in the image:
 
 Then you can ssh into the devices via their trust interface and test things out:
 
-    ssh -i ~/.vagrant.d/insecure_private_key vagrant@172.16.10.10  # srx1-left
-    ssh -i ~/.vagrant.d/insecure_private_key vagrant@172.16.20.10  # srx1-right
+    ssh vagrant@172.16.10.10  # srx1-left
+    ssh vagrant@172.16.20.10  # srx1-right
 
 Next we will want to run the Ansible deploy playbook to set up other interfaces, policies and such.
 
@@ -167,6 +167,9 @@ Really good, has VPN example, but does not address issues specific to vSRX.
 
 Docs on setting up a vSRX 15.1x49 (not Firefly) cluster under KVM are at:
 http://www.juniper.net/techpubs/en_US/vsrx15.1x49/topics/task/multi-task/security-vsrx-cluster-stage-provisioning-kvm.html
+
+Also we have System Requirements:
+https://www.juniper.net/techpubs/en_US/vsrx15.1x49/topics/reference/general/security-vsrx-system-requirement-with-kvm.html
 
 Notes on interfaces:
 - All SRX devices use the fxp0 interface (adapter 1) for out-of-band management,
