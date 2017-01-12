@@ -54,7 +54,7 @@ In this environment, the `srx1-left` SRX and `srx1-right` SRX form a VPN tunnel 
 their local networks, through the `r1-middle host`, which acts as a router.  The `ge-0/0/2.0` interfaces
 are external VPN endpoints with "public" IPs.
 
-### SRX Vagrant VM Bootstrap Configuration
+### Vagrant SRX VM Bootstrap Configuration
 
 The `vagrant-junos` plugin (https://github.com/JNPRAutomate/vagrant-junos) provides for
 network interface and ssh key provisioning, based off the standard vagrant configuration
@@ -89,7 +89,7 @@ Then you can ssh into the devices via their trust interface and test things out:
 
 Next we will want to run the Ansible deploy playbook to set up other interfaces, policies and such.
 
-### SRX Vagrant VM Deployment
+### Vagrant SRX VM Deployment
 
 Check, then deploy:
 
@@ -98,8 +98,10 @@ Check, then deploy:
 
 To bring up the tunnel:
 
-- The middle router will need:
+- The middle router will need forwarding enabled:
 
+      vagrant ssh middle
+      sudo -i
       echo "1" > /proc/sys/net/ipv4/ip_forward
 
   TODO: add this to a playbook with something like:
@@ -313,7 +315,7 @@ In `/etc/network/interfaces`:
       bridge_ports em2.106
 
 
-### SRX KVM VM Bootstrap Configuration
+### KVM SRX VM Bootstrap Configuration
 
 Create VMs with virt-install:
 
@@ -322,17 +324,20 @@ Create VMs with virt-install:
     SRX_IMAGE="${QEMU_IMAGE_PATH}/${SRX_NAME}.img"
     SRX_SRC_IMAGE="${QEMU_IMAGE_PATH}/media-vsrx-vmdisk-15.1X49-D60.7.qcow2"
 
-- Download vSRX qcow2 image (will be in artifactory/misc)
+- Download vSRX qcow2 image (TODO: it will be in artifactory/misc)
 
 - Copy the image:
 
       cp $SRX_SRC_IMAGE $SRX_IMAGE
 
-- Install VM with: 4 GB RAM, 2 vCPU, 16 GB disk:
+- Create VM with virt-install:
 
+      # Use copied image, 4 GB RAM, 2 vCPU, 16 GB disk:
       virt-install --name $SRX_NAME --ram 4096 --cpu SandyBridge,+vmx --vcpus=2 --arch=x86_64 \
       --disk path=${SRX_IMAGE},size=16,device=disk,bus=ide,format=qcow2 \
       --os-type linux --os-variant rhel7 --import \
+
+      # Choose a network type, one of single-host libvirt, two-host cluster bridged or stand-alone bridged
 
       # single-host libvirt network settings:
       --network=network:default,model=virtio \
@@ -341,7 +346,7 @@ Create VMs with virt-install:
       --network=network:srx_left_in,model=virtio \
       --network=network:srx_left_out,model=virtio
 
-      # two-host cluster bridged network settings:
+      # two-host cluster bridged network settings (srx1-left, srx2-left):
       # br0           # fxp0 mgmt (DHCP)
       # br_data_left  # em0 data
       # br_sync_left  # fabN sync
@@ -352,6 +357,7 @@ Create VMs with virt-install:
       --network bridge=br_sync_left,model=virtio \
       --network bridge=br_in_left,model=virtio \
       --network bridge=br_out_left,model=virtio
+
       # stand-alone with bridged network settings (srx1-right):
       # br0           # fxp0 mgmt (DHCP)
       # br_in_right   # ge-0/0/1 internal
