@@ -5,55 +5,76 @@
 # Usage:
 #   srx-provision <connect_str> <username> <password>
 # for example:
-#   ./srx-provision "vagrant ssh srx1-left" root password
+#   ./srx-provision "vagrant ssh srx1-left" root ""
+# or:
+#   ./srx-provision "ssh -t root@10.38.31.58 \"virsh console srx2-test\"" root ""
 #
 # This uses pexpect, which on Ubuntu is obtained via pip or globally with:
 #   apt-get install python-pexpect
+
+# FIXME:
+# Take script parameters for:
+# - determine flavor: vagrant, kvm standalone, kvm cluster
+# - get configuration parameters, at least six items, more for clusters!
+#   Maybe get this via a generated config file?
+# - be able to leave off an unneeded auth password
+# - have a debugging option to set e.g. `child.logfile = sys.stdout`
 
 import sys, pexpect
 
 
 class JuniperSRX():
 
-    def __init__(self, connect_str, username, password):
+    def __init__(self, connect_str, username, password=None):
         self.connect_str = connect_str
         self.username = username
         self.password = password
 
     # Utility functions
     def expect_command_prompt(self):
-        self.child.expect("%s@.*%%" % self.username)
+        self.child.expect("%s@?.*%%" % self.username)
     def expect_cli_prompt(self):
-        self.child.expect("%s@.*>" % self.username)
+        self.child.expect("%s@?.*>" % self.username)
     def expect_configure_prompt(self):
-        self.child.expect("%s@.*#" % self.username)
+        self.child.expect("%s@?.*#" % self.username)
 
     def connect(self):
         # Connect with an account that has SSH key access to the command line
         self.child = pexpect.spawn(self.connect_str)
-        if 0:  # FIXME handle cases where we need to log in
-            self.login()
-        self.expect_command_prompt()
-        # Now at the command line, start CLI
-        self.child.sendline('cli\r')
-        self.expect_cli_prompt()
+        # FIXME debugging:
+        # self.child.logfile = sys.stdout
 
     def login(self):
-        self.child.expect('?')
+        self.child.sendline('\r')
+        self.child.expect('Connected')  # FIXME: this should just be for the virsh console connection...
         self.child.sendline('\r')
         self.child.expect('.*ogin')
         self.child.sendline(self.username)
-        self.child.expect('.*assword:.*')
-        self.child.sendline(self.password)
-        self.child.sendline('\r')
+        if self.password:
+            self.child.expect('.*assword:.*')
+            self.child.sendline(self.password)
+            self.child.sendline('\r')
 
     def configure(self, configs, comment):
         # Configure a connected device with the list of configuation commands,
         # and commit with the provided comment message.
+        self.child.sendline('\r')
+        self.expect_command_prompt()
+        # Now at the command line, start CLI
+        self.child.sendline('cli\r')
+        self.expect_cli_prompt()
         self.child.sendline('edit\r')
         self.expect_configure_prompt()
         for config in configs:
-            self.child.sendline("%s\r" % config)
+            # Had a problem with strings > 128 chars being truncated over a slow serial console.
+            # So bust long strings into chunks to be sloooow.
+            # This is tunable with chunk and child.delaybeforesend (it calls time.sleep(), so use seconds)
+            if len(config) > 100:
+                chunk=5
+                map(self.child.send, [config[start:start+chunk] for start in range(0, len(config), chunk)])
+                self.child.sendline('\r')
+            else:
+                self.child.sendline("%s\r" % config)
             self.expect_configure_prompt()
         self.child.sendline("commit comment \"%s\" and-quit\r" % comment)
         self.expect_cli_prompt()
@@ -62,7 +83,8 @@ if __name__ == '__main__':
     ( connect_str, username, password ) = ( sys.argv[1], sys.argv[2], sys.argv[3] )
     srx = JuniperSRX(connect_str, username, password)
     srx.connect()
-    if 1:  # FIXME if we are provisioning a Vagrant
+
+    if 0:  # FIXME if we are provisioning a Vagrant
         # Configure trust zone interface for netconf management
         configs = [
         "set system services netconf ssh",
@@ -70,6 +92,27 @@ if __name__ == '__main__':
         "set security zones security-zone trust host-inbound-traffic system-services ping",
         "set security zones security-zone trust host-inbound-traffic system-services ssh",
         "set security zones security-zone trust host-inbound-traffic system-services netconf",
+        ]
+        srx.configure(configs=configs,comment="Enable netconf management via pexpect")
+
+    if 1:  # FIXME if we are provisioning a standalone KVM instance
+        srx.login()
+        # Configure management interface, auth, and netconf management
+        # single-host kvm:
+        # 10.38.31.39  srx1-right fxp0    host3.itlab.hq.wavemarket.com
+        # 10.38.31.40  srx2-test  fxp0    host4.itlab.hq.wavemarket.com
+        root_pw_hash="$5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD"
+        root_ssh_key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCoeELibgrP7LBpFKChyotKddgZ2MwairR3Q0Ixul8NBHxpwrNi038RN13NHnUMK3AfTKeX+Ch4FcD3G9bQykUfzZNJ7JZHtbTvQ27adn6+HDOd14uckK7fCI2cpQ8/Bt6+H4U4K7ThWLMC9UsM+Mro4+PWBKM4n014Fi5k5KrfkW88rBhHM9uLLAX2e9/zcOafddSU9Zl5R68DLCgFIxzIdd2rL8sjye4s50avLHeX77az8hNQwdVSxd58TS+iXU3/PsFYkWSvL52WBQv+HXNRWieufO9vOdL5sBCE9kSHcz+LedyDDdJphqv+ZatWK1xOSiCTK8qeduqND+TXB84Es01NYGYad48h7tti0SU4HDcyw9gbkNKi2ktURZmL2rGPBfkdKFsNuh3PQntkgRx14NwvW8VHsf18vVM9tSmHOPahIUi4rQ1HPpAbDquoriva/rC9qVlgxJepzsGPOWXKGXSctUOQLVlCWaln9mKTFwo0wBIwrCcSeGTZL74MHhl1PsU0zQqAX800PUPDs/DXq3kQs/Pbf/sLQWV3c4dc3A8B1qWA2BWHKx3XdlXbO9SxOHiSxr2tnyNWpyR8xJ5ufaJXDSXV0/pbKaFyoW9zgqO50QX8tV7ETN48t1ANkz14yc27Homddn8I8JyPfN/B77zQwqVQOf9fKqMNTwXPCQ== peter.pletcher@peterpletcher-lt"
+        system_host_name="srx1-test"
+        (mgmt_interface_name,mgmt_interface_ip) = ("fxp0","10.38.31.40/27")
+        mgmt_interface_route="static route 0/0 next-hop 10.38.31.33"
+        configs = [
+        "set system root-authentication encrypted-password \"%s\"" % root_pw_hash,
+        "set system root-authentication ssh-rsa \"%s\"" % root_ssh_key,
+        "set system services netconf ssh",
+        "set system host-name %s" % system_host_name,
+        "set interfaces %s unit 0 family inet address %s" % (mgmt_interface_name,mgmt_interface_ip),
+        "set routing-options %s" % mgmt_interface_route,
         ]
         srx.configure(configs=configs,comment="Enable netconf management via pexpect")
 
@@ -81,23 +124,24 @@ if __name__ == '__main__':
 #
 # Implementation Notes:
 #
-# For Vagrants, the login and configure looks like:
-# $ vagrant ssh srx1-left
-# --- JUNOS 12.1X47-D20.7 built 2015-03-03 21:53:50 UTC
-# root@srx1-left% cli
-# root@srx1-left.vagrant> edit
-# Entering configuration mode
-#
-# [edit]
-# root@srx1-left.vagrant# set system time-zone UTC
-#
-# [edit]
-# root@srx1-left.vagrant# commit comment "Set time zone to UTC" and-quit
-# commit complete
-# Exiting configuration mode
-#
-# root@srx1-left.vagrant>
 
+# For Vagrants, the login and configure looks like:
+#   $ vagrant ssh srx1-left
+#   --- JUNOS 12.1X47-D20.7 built 2015-03-03 21:53:50 UTC
+#   root@srx1-left% cli
+#   root@srx1-left.vagrant> edit
+#   Entering configuration mode
+#
+#   [edit]
+#   root@srx1-left.vagrant# set system time-zone UTC
+#
+#   [edit]
+#   root@srx1-left.vagrant# commit comment "Set time zone to UTC" and-quit
+#   commit complete
+#   Exiting configuration mode
+#
+#   root@srx1-left.vagrant>
+#
 # Vagrant SRX configuration needed is:
 #
 # set system services netconf ssh
@@ -106,3 +150,53 @@ if __name__ == '__main__':
 # set security zones security-zone trust host-inbound-traffic system-services ssh
 # set security zones security-zone trust host-inbound-traffic system-services netconf
 # commit comment "Enable netconf management" and-quit
+
+# KVM console over SSH to hypervisor.
+# NOTE: virsh console needs to see a pseudo-terminal, so use -t
+#   ssh -t root@10.38.31.58 "virsh console srx2-left"
+# Or, if you have "virsh" installed locally, something like:
+#   virsh -c qemu+ssh://root@kvmhost.company.org/system list
+#
+# For KVM images, the login and configure looks like:
+#   $ ssh -t root@10.38.31.58 "virsh console srx2-test"
+#   Connected to domain srx2-test
+#   Escape character is ^]
+#   (send \r)
+#
+#   Amnesiac (ttyd0)
+#
+#   login: root
+#
+#   --- JUNOS 15.1X49-D60.7 built 2016-09-13 23:16:14 UTC
+#   root@% cli
+#   root> edit
+#   Entering configuration mode
+#
+#   [edit]
+#   root#
+#
+#   [edit]
+#   root# quit
+#    Exiting configuration mode
+#
+#   root>
+
+# KVM SRX configuration needed is:
+#
+# set system root-authentication encrypted-password "{{root_pw_hash}}"
+# set system root-authentication ssh-rsa "{{root_ssh_key}}"
+# set system services netconf ssh
+# # single-host kvm:
+# # 10.38.31.39  srx1-right fxp0    host3.itlab.hq.wavemarket.com
+# set system host-name srx1-right
+# set interfaces fxp0 unit 0 family inet address 10.38.31.39/27
+# set routing-options static route 0/0 next-hop 10.38.31.33
+# # clustered KVM:
+# set interfaces fab0 fabric-options member-interfaces ge-0/0/0
+# set interfaces fab1 fabric-options member-interfaces ge-7/0/0
+# set groups node0 system host-name srx1-left
+# set groups node0 interfaces fxp0 unit 0 family inet address 10.38.31.37/27
+# set groups node1 system host-name srx2-left
+# set groups node1 interfaces fxp0 unit 0 family inet address 10.38.31.38/27
+# set apply-groups "${node}"
+# set routing-options static route 0/0 next-hop 10.38.31.33
