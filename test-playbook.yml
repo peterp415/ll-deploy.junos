@@ -1,0 +1,50 @@
+---
+
+- name: demo vsrx
+  hosts: host3.itlab.hq.wavemarket.com
+  gather_facts: no
+  #connection: local
+  roles:
+    - Juniper.junos
+  vars:
+    junos_config_user: root
+    staticroute_hop: "10.38.31.1"
+
+  tasks:
+
+    # connection: local version
+    # - name: Verifying NETCONF
+    #   wait_for: host={{ ansible_ssh_host }} port=830
+
+    - name: Verifying NETCONF Connection
+      wait_for: host="{{ inventory_hostname }}" port=830 timeout=5
+      delegate_to: localhost
+
+    - name: Retrieve Juniper Facts
+      junos_get_facts: host="{{ inventory_hostname }}" user="{{ junos_config_user }}"
+      register: junos
+      delegate_to: localhost
+
+    # show facts
+    - name: Show version
+      debug: msg="{{ junos.facts.version }}"
+
+    - name: Show facts
+      debug: msg="{{ junos.facts }}"
+
+    # - name: Add a static route
+    #   junos_install_config:
+    #     host: "{{ inventory_hostname }}"    # variable is from inventory file
+    #     file: staticroute_config.conf
+    #     overwrite: false                  # Add to existing configuration (default)
+    #     user: "{{ junos_config_user }}"
+    #   delegate_to: localhost
+
+    # Note: junos_template requires installing jxmlease
+    - name: Template a static route
+      junos_template:
+        host: "{{ inventory_hostname }}"
+        username: "{{ junos_config_user }}"
+        src: test-staticroute_template.j2
+        comment: "Update from a template"
+      delegate_to: localhost

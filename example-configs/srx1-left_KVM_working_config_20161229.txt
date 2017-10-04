@@ -1,0 +1,98 @@
+root@srx1-left> show configuration |display set|no-more    
+set version 15.1X49-D60.7
+set groups node0 system host-name srx1-left
+set groups node0 interfaces fxp0 unit 0 family inet address 10.38.31.37/27
+set groups node1 system host-name srx2-left
+set groups node1 interfaces fxp0 unit 0 family inet address 10.38.31.38/27
+set apply-groups "${node}"
+set system time-zone PST
+set system root-authentication encrypted-password "$5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD"
+set system root-authentication ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCoeELibgrP7LBpFKChyotKddgZ2MwairR3Q0Ixul8NBHxpwrNi038RN13NHnUMK3AfTKeX+Ch4FcD3G9bQykUfzZNJ7JZHtbTvQ27adn6+HDOd14uckK7fCI2cpQ8/Bt6+H4U4K7ThWLMC9UsM+Mro4+PWBKM4n014Fi5k5KrfkW88rBhHM9uLLAX2e9/zcOafddSU9Zl5R68DLCgFIxzIdd2rL8sjye4s50avLHeX77az8hNQwdVSxd58TS+iXU3/PsFYkWSvL52WBQv+HXNRWieufO9vOdL5sBCE9kSHcz+LedyDDdJphqv+ZatWK1xOSiCTK8qeduqND+TXB84Es01NYGYad48h7tti0SU4HDcyw9gbkNKi2ktURZmL2rGPBfkdKFsNuh3PQntkgRx14NwvW8VHsf18vVM9tSmHOPahIUi4rQ1HPpAbDquoriva/rC9qVlgxJepzsGPOWXKGXSctUOQLVlCWaln9mKTFwo0wBIwrCcSeGTZL74MHhl1PsU0zQqAX800PUPDs/DXq3kQs/Pbf/sLQWV3c4dc3A8B1qWA2BWHKx3XdlXbO9SxOHiSxr2tnyNWpyR8xJ5ufaJXDSXV0/pbKaFyoW9zgqO50QX8tV7ETN48t1ANkz14yc27Homddn8I8JyPfN/B77zQwqVQOf9fKqMNTwXPCQ== peter.pletcher@peterpletcher-lt"
+set system services ssh
+set system services netconf ssh
+set system services web-management http interface fxp0.0
+set system syslog user * any emergency
+set system syslog file messages any any
+set system syslog file messages authorization info
+set system syslog file interactive-commands interactive-commands any
+set system license autoupdate url https://ae1.juniper.net/junos/key_retrieval
+set chassis cluster reth-count 2
+set chassis cluster redundancy-group 0 node 0 priority 100
+set chassis cluster redundancy-group 0 node 1 priority 1
+set chassis cluster redundancy-group 1 node 0 priority 100
+set chassis cluster redundancy-group 1 node 1 priority 1
+set security ike proposal ike-proposal-vpntest1 authentication-method pre-shared-keys
+set security ike proposal ike-proposal-vpntest1 dh-group group2
+set security ike proposal ike-proposal-vpntest1 authentication-algorithm sha1
+set security ike proposal ike-proposal-vpntest1 encryption-algorithm aes-128-cbc
+set security ike policy preshared mode main
+set security ike policy preshared proposal-set standard
+set security ike policy preshared pre-shared-key ascii-text "$9$5F9pEclX7VlKLNVwaJ.P5F9phcl"
+set security ike policy ike-policy-vpntest1 mode main
+set security ike policy ike-policy-vpntest1 proposals ike-proposal-vpntest1
+set security ike policy ike-policy-vpntest1 pre-shared-key ascii-text "$9$pIU6BhrLxd4aUdbgJUjPf9ApBhrXxd"
+set security ike gateway srx1-right ike-policy ike-policy-vpntest1
+set security ike gateway srx1-right address 172.16.100.30
+set security ike gateway srx1-right external-interface reth1.0
+set security ipsec policy std proposal-set standard
+set security ipsec vpn vsrx-link bind-interface st0.0
+set security ipsec vpn vsrx-link ike gateway srx1-right
+set security ipsec vpn vsrx-link ike ipsec-policy std
+set security ipsec vpn vsrx-link establish-tunnels immediately
+set security flow tcp-mss ipsec-vpn mss 1420
+set security screen ids-option untrust-screen icmp ping-death
+set security screen ids-option untrust-screen ip source-route-option
+set security screen ids-option untrust-screen ip tear-drop
+set security screen ids-option untrust-screen tcp syn-flood alarm-threshold 1024
+set security screen ids-option untrust-screen tcp syn-flood attack-threshold 200
+set security screen ids-option untrust-screen tcp syn-flood source-threshold 1024
+set security screen ids-option untrust-screen tcp syn-flood destination-threshold 2048
+set security screen ids-option untrust-screen tcp syn-flood queue-size 2000
+set security screen ids-option untrust-screen tcp syn-flood timeout 20
+set security screen ids-option untrust-screen tcp land
+set security policies from-zone trust to-zone trust policy default-permit match source-address any
+set security policies from-zone trust to-zone trust policy default-permit match destination-address any
+set security policies from-zone trust to-zone trust policy default-permit match application any
+set security policies from-zone trust to-zone trust policy default-permit then permit
+set security policies from-zone trust to-zone untrust policy default-permit match source-address any
+set security policies from-zone trust to-zone untrust policy default-permit match destination-address any
+set security policies from-zone trust to-zone untrust policy default-permit match application any
+set security policies from-zone trust to-zone untrust policy default-permit then permit
+set security policies from-zone untrust to-zone trust policy default-deny match source-address any
+set security policies from-zone untrust to-zone trust policy default-deny match destination-address any
+set security policies from-zone untrust to-zone trust policy default-deny match application any
+set security policies from-zone untrust to-zone trust policy default-deny then deny
+set security policies from-zone trust to-zone vpn policy any match source-address any
+set security policies from-zone trust to-zone vpn policy any match destination-address any
+set security policies from-zone trust to-zone vpn policy any match application any
+set security policies from-zone trust to-zone vpn policy any then permit
+set security policies from-zone vpn to-zone trust policy any match source-address any
+set security policies from-zone vpn to-zone trust policy any match destination-address any
+set security policies from-zone vpn to-zone trust policy any match application any
+set security policies from-zone vpn to-zone trust policy any then permit
+set security zones security-zone trust tcp-rst
+set security zones security-zone trust host-inbound-traffic system-services all
+set security zones security-zone trust host-inbound-traffic protocols all
+set security zones security-zone trust interfaces reth0.0
+set security zones security-zone untrust screen untrust-screen
+set security zones security-zone untrust host-inbound-traffic system-services all
+set security zones security-zone untrust host-inbound-traffic protocols all
+set security zones security-zone untrust interfaces reth1.0
+set security zones security-zone vpn host-inbound-traffic system-services all
+set security zones security-zone vpn host-inbound-traffic protocols all
+set security zones security-zone vpn interfaces st0.0
+set interfaces ge-0/0/1 gigether-options redundant-parent reth0
+set interfaces ge-0/0/2 gigether-options redundant-parent reth1
+set interfaces ge-7/0/1 gigether-options redundant-parent reth0
+set interfaces ge-7/0/2 gigether-options redundant-parent reth1
+set interfaces fab0 fabric-options member-interfaces ge-0/0/0
+set interfaces fab1 fabric-options member-interfaces ge-7/0/0
+set interfaces fxp0 unit 0
+set interfaces reth0 redundant-ether-options redundancy-group 1
+set interfaces reth0 unit 0 family inet address 172.16.10.10/24
+set interfaces reth1 redundant-ether-options redundancy-group 1
+set interfaces reth1 unit 0 family inet address 172.16.100.20/24
+set interfaces st0 unit 0 family inet address 10.30.1.1/30
+set routing-options static route 0.0.0.0/0 next-hop 10.38.31.33
+set routing-options static route 172.16.200.0/24 next-hop 172.16.100.10
+set routing-options static route 172.16.20.0/24 next-hop st0.0

@@ -1,0 +1,27 @@
+[vsrx]
+host1.itlab.hq.wavemarket.com
+host3.itlab.hq.wavemarket.com
+
+[vsrx:vars]
+# Need these only for connection: local
+#ansible_connection=local
+#ansible_python_interpreter=/home/peter.pletcher/.virtualenvs/junos-vpn2/bin/python
+
+
+# Explanation of the `connection: local` problem,
+# from https://github.com/ansible/ansible/issues/16724
+#
+# To clarify:
+#
+# These are identical: local_action:, delegate_to: localhost
+# both of them change the target to 'localhost' and the task then uses the
+# ansible_python_interpreter and ansible_connection defined for localhost.
+#
+# If you don't define a localhost, Ansible creates an implicit one which
+# assigns sys.executable (python under which ansible itself is executed) to
+# ansible_python_interpreter AND ansible_connection: local.
+# If you define localhost, you are responsible for the rest of the host vars.
+#
+# Using connection: local does NOT change the target host, so any variables
+# set for the remote are kept, ansible_python_interpreter is conserved (even
+# when undefined). So you might need to set it for that specific task.

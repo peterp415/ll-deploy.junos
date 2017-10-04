@@ -1,0 +1,86 @@
+root@srx1-right.vagrant> show configuration |display set|no-more 
+set version 12.1X47-D20.7
+set system host-name srx1-right.vagrant
+set system time-zone PST
+set system root-authentication encrypted-password "$5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD"
+set system root-authentication ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDb4LFNJ/pR3SzkSHomEm5v+JkTq75PR8le5osLl8IcrA9yZRCePZb5xLmxmbKWuamlfgVYyiTgMdAs2i6ZBuLVpuHxgPVRNHfHSeMap23Za1P2eI7zmRqU4U1Ljo6XnO3OExrt6nfQNqMDSK+JHxCa4VgBTjg2A7h0NeoTq9cotoRQsdDCtY7OfZ+iMESSJ10yZLQQmQzw7m3yZXLvVhQJoHwD3Zrv4wuX20vh19LM9X3yQOT9OKCAd0DSbELxrHtUcFnXpZ8rwJlLkataCgsqex1r7e+MmgPhwrC2my7KBvWYOeGseb4hLBn5qZtvVDa9ChuTQmukg/UV3UqJF6LV vagrant"
+set system root-authentication ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDoGQ8mmQdVCJ5kG6SCGOq8hYalSKQU/fWUUJKDPCDV7Nfm5yq9pg3M4d+EHLkiUOjOGw0+rPitCgWMEB+iWyqoAtmF00rVAcdUApKNPSisErdYJr88+rGCRvtMyOs5AbSVdVuJogB7iLfJEccL3GpdcuJBPoMmFCCmx3lpNaLWULkqmhh9P0TbmImWhrWxCQ5I1fhkqi+ycQ4JGgmLHAzAbdLjjMUc2cdSDNY6+H24LYHEHe0KMzOtzSU5zpDyDvg6Kr8sNvfa9zV3iaLRTrC8rbu3Ir2rhHHbABwK3p+zKsW3N3h2UvBtkf+Dh0r6qq+u6HFmLgyF1+49uvLlDhaR vagrant"
+set system login user vagrant uid 2000
+set system login user vagrant class super-user
+set system login user vagrant authentication ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"
+set system services ssh root-login allow
+set system services netconf ssh
+set system services web-management http interface ge-0/0/0.0
+set system syslog user * any emergency
+set system syslog file messages any any
+set system syslog file messages authorization info
+set system syslog file interactive-commands interactive-commands any
+set system license autoupdate url https://ae1.juniper.net/junos/key_retrieval
+set interfaces ge-0/0/0 unit 0 family inet dhcp
+set interfaces ge-0/0/1 unit 0 family inet address 172.16.20.10/24
+set interfaces ge-0/0/2 unit 0 family inet address 172.16.200.20/24
+set interfaces st0 unit 0 family inet address 10.30.1.2/30
+set routing-options static route 172.16.100.0/24 next-hop 172.16.200.10
+set routing-options static route 172.16.10.0/24 next-hop st0.0
+set security ike proposal ike-proposal-vpntest1 authentication-method pre-shared-keys
+set security ike proposal ike-proposal-vpntest1 dh-group group2
+set security ike proposal ike-proposal-vpntest1 authentication-algorithm sha1
+set security ike proposal ike-proposal-vpntest1 encryption-algorithm aes-128-cbc
+set security ike policy preshared mode main
+set security ike policy preshared proposal-set standard
+set security ike policy preshared pre-shared-key ascii-text "$9$UHHPQCtOSrvO1clvW-daZUHPQAtO"
+set security ike policy ike-policy-vpntest1 mode main
+set security ike policy ike-policy-vpntest1 proposals ike-proposal-vpntest1
+set security ike policy ike-policy-vpntest1 pre-shared-key ascii-text "$9$rv3vX-goG.PQGDqfQFAthSrvX-4oG"
+set security ike gateway srx1-left ike-policy ike-policy-vpntest1
+set security ike gateway srx1-left address 172.16.100.20
+set security ike gateway srx1-left external-interface ge-0/0/2.0
+set security ipsec policy std proposal-set standard
+set security ipsec vpn vsrx-link bind-interface st0.0
+set security ipsec vpn vsrx-link ike gateway srx1-left
+set security ipsec vpn vsrx-link ike ipsec-policy std
+set security ipsec vpn vsrx-link establish-tunnels immediately
+set security flow tcp-mss ipsec-vpn mss 1420
+set security screen ids-option untrust-screen icmp ping-death
+set security screen ids-option untrust-screen ip source-route-option
+set security screen ids-option untrust-screen ip tear-drop
+set security screen ids-option untrust-screen tcp syn-flood alarm-threshold 1024
+set security screen ids-option untrust-screen tcp syn-flood attack-threshold 200
+set security screen ids-option untrust-screen tcp syn-flood source-threshold 1024
+set security screen ids-option untrust-screen tcp syn-flood destination-threshold 2048
+set security screen ids-option untrust-screen tcp syn-flood queue-size 2000
+set security screen ids-option untrust-screen tcp syn-flood timeout 20
+set security screen ids-option untrust-screen tcp land
+set security policies from-zone trust to-zone trust policy default-permit match source-address any
+set security policies from-zone trust to-zone trust policy default-permit match destination-address any
+set security policies from-zone trust to-zone trust policy default-permit match application any
+set security policies from-zone trust to-zone trust policy default-permit then permit
+set security policies from-zone trust to-zone untrust policy default-permit match source-address any
+set security policies from-zone trust to-zone untrust policy default-permit match destination-address any
+set security policies from-zone trust to-zone untrust policy default-permit match application any
+set security policies from-zone trust to-zone untrust policy default-permit then permit
+set security policies from-zone untrust to-zone trust policy default-deny match source-address any
+set security policies from-zone untrust to-zone trust policy default-deny match destination-address any
+set security policies from-zone untrust to-zone trust policy default-deny match application any
+set security policies from-zone untrust to-zone trust policy default-deny then deny
+set security policies from-zone trust to-zone vpn policy any match source-address any
+set security policies from-zone trust to-zone vpn policy any match destination-address any
+set security policies from-zone trust to-zone vpn policy any match application any
+set security policies from-zone trust to-zone vpn policy any then permit
+set security policies from-zone vpn to-zone trust policy any match source-address any
+set security policies from-zone vpn to-zone trust policy any match destination-address any
+set security policies from-zone vpn to-zone trust policy any match application any
+set security policies from-zone vpn to-zone trust policy any then permit
+set security zones functional-zone management interfaces ge-0/0/0.0 host-inbound-traffic system-services all
+set security zones functional-zone management interfaces ge-0/0/0.0 host-inbound-traffic protocols all
+set security zones security-zone trust tcp-rst
+set security zones security-zone trust host-inbound-traffic system-services all
+set security zones security-zone trust host-inbound-traffic protocols all
+set security zones security-zone trust interfaces ge-0/0/1.0
+set security zones security-zone untrust screen untrust-screen
+set security zones security-zone untrust host-inbound-traffic system-services all
+set security zones security-zone untrust host-inbound-traffic protocols all
+set security zones security-zone untrust interfaces ge-0/0/2.0
+set security zones security-zone vpn host-inbound-traffic system-services all
+set security zones security-zone vpn host-inbound-traffic protocols all
+set security zones security-zone vpn interfaces st0.0
