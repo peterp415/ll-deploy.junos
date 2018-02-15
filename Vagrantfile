@@ -1,6 +1,9 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Juniper Firefly Image
+FIREFLY_VERSION = "juniper/ffp-12.1X47-D15.4"
+
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
@@ -41,7 +44,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # The junos plugin is needed to configure them.
   # Also note that the host gets the .1 addresses in these private nets.
   config.vm.define 'srx1-left' do |left|
-    left.vm.box = "juniper/ffp-12.1X47-D20.7"
+    left.vm.box = FIREFLY_VERSION
     left.vm.hostname = "srx1-left.vagrant"
     left.vm.network "private_network", ip: "172.16.10.10" #,  virtualbox__intnet: "left-inside"
     left.vm.network "private_network", ip: "172.16.100.20", virtualbox__intnet: "left-outside"
@@ -61,7 +64,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.define 'srx1-right' do |right|
-    right.vm.box = "juniper/ffp-12.1X47-D20.7"
+    right.vm.box = FIREFLY_VERSION
     right.vm.hostname = "srx1-right.vagrant"
     right.vm.network "private_network", ip: "172.16.20.10" #,  virtualbox__intnet: "right-inside"
     right.vm.network "private_network", ip: "172.16.200.20", virtualbox__intnet: "right-outside"
