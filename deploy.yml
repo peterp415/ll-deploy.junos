@@ -1,5 +1,4 @@
 ---
-
 # Generate and apply configuration to devices.
 # Based loosely on https://github.com/dgjnpr/ansible-template-for-junos
 
@@ -50,12 +49,10 @@
   handlers:
 
     - name: Commit configuration via NETCONF
-      junos_install_config:
-        host: "{{ junos_config_hostname }}"
-        # This user's ssh key needs to be active
-        user: "{{ junos_config_user }}"
-        file: "{{ junos_conf_file }}"
-        overwrite: "yes"
+      junos_config:
+        provider: "{{ netconf }}"
+        src: "{{ junos_conf_file }}"
+        update: override
       delegate_to: localhost
       # Use -e 'junos_commit=true' to run the commit
       when: junos_commit is defined

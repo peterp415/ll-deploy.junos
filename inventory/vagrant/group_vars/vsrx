@@ -10,6 +10,9 @@ junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
 junos_config_user: "{{ ansible_ssh_user }}"
 # But NETCONF needs the key to be active, so be sure to
 #   ssh-add ~/.vagrant.d/insecure_private_key
+netconf:
+  host: "{{ junos_config_hostname }}"
+  username: "{{ junos_config_user }}"
 
 # Common template variables
 
@@ -51,7 +54,6 @@ junos_common_config:
         }
     }
   management_misc: |
-    version 12.1X47-D20.7;
     system {
         syslog {
             user * {

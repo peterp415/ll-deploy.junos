@@ -49,8 +49,8 @@ chassis {
 security {
   zones {
     {% for group in junos_interfaces|groupby('zone') %}
-    security-zone {{ group.grouper }} {
-      {% for interface in group.list %}
+    security-zone {{ group[0] }} {
+      {% for interface in group[1] %}
         interfaces {{ interface.name }}
       {% endfor %}
     }
