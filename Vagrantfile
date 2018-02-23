@@ -31,15 +31,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.ssh.insert_key = false  # Do not add a unique custom-generated key
 
-  config.vm.provider :virtualbox do |vb|
-    # for troubleshooting cloud-init/vagrant/ubuntu issue (https://github.com/mitchellh/vagrant/issues/3860)
-    # vb.gui = true
-    vb.customize ["modifyvm", :id, "--memory", 512]
-    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-    # For VirtualBox 5 NAT interface disconnected issue (see https://github.com/mitchellh/vagrant/issues/7648)
-    vb.customize ["modifyvm", :id, "--cableconnected1", "on"]
-  end
-
   # We add private_network interfaces to these, which just create the host-only networks.
   # The junos plugin is needed to configure them.
   # Also note that the host gets the .1 addresses in these private nets.
@@ -48,15 +39,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     left.vm.hostname = "srx1-left.vagrant"
     left.vm.network "private_network", ip: "172.16.10.10" #,  virtualbox__intnet: "left-inside"
     left.vm.network "private_network", ip: "172.16.100.20", virtualbox__intnet: "left-outside"
-    left.vm.provider :virtualbox do |vb|
-      # The SRX images need 4 GB RAM or they will fail by locking up.
-      vb.customize ["modifyvm", :id, "--memory", 4096]
-    end
     left.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
+    left.vm.provision "file", source: "provision/srx-provision.cfg", destination: "/cf/root/provision.cfg"
+    left.vm.provision :host_shell do |host_shell|
+      host_shell.inline = 'vagrant ssh srx1-left -c "/usr/sbin/cli -f /cf/root/provision.cfg"'
+    end
   end
 
   config.vm.define 'middle' do |middle|
-    middle.vm.box = "bento/ubuntu-14.04"
+    middle.vm.box = FIREFLY_VERSION + "-packetmode"
     middle.vm.hostname = "r1-middle.vagrant"
     middle.vm.network "private_network", ip: "172.16.100.10", virtualbox__intnet: "left-outside"  #  eth1
     middle.vm.network "private_network", ip: "172.16.200.10", virtualbox__intnet: "right-outside" #  eth2
@@ -68,11 +59,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     right.vm.hostname = "srx1-right.vagrant"
     right.vm.network "private_network", ip: "172.16.20.10" #,  virtualbox__intnet: "right-inside"
     right.vm.network "private_network", ip: "172.16.200.20", virtualbox__intnet: "right-outside"
-    right.vm.provider :virtualbox do |vb|
-      # The SRX images need 4 GB RAM or they will fail by locking up.
-      vb.customize ["modifyvm", :id, "--memory", 4096]
+    right.vm.provision "file", source: "provision/srx-provision.cfg", destination: "/cf/root/provision.cfg"
+    right.vm.provision :host_shell do |host_shell|
+      host_shell.inline = 'vagrant ssh srx1-right -c "/usr/sbin/cli -f /cf/root/provision.cfg"'
     end
     right.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
   end
-
 end
