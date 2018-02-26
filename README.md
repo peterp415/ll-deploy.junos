@@ -61,8 +61,8 @@ network interface and ssh key provisioning, based off the standard vagrant confi
 items such as `config.vm.network` and `config.ssh.private_key_path`.  So the Vagrant-defined
 network interfaces and default "insecure public key" will be set up automatically.
 
-To complete the provisioning setup, we use a python-pexpect script to set up the management
-interface.  For details see Automatic VM Provisioning below.
+Final provisioning is handled by Vagrant's shell provisioner and places a config file on
+the SRX and commits it.  The config is located in ./provision/srx-provision.cfg
 
 To bring up the environment:
 
@@ -76,13 +76,7 @@ Vagrant expects you to manage the devices through their dhcp-configured `ge-0/0/
 using its keys, port forwarding etc.  For simplicity we are going to Ansible manage through the
 "internal" `ge-0/0/1` interfaces via their static IPs on host-only networks.
 
-Use the `srx-provision` provisioning script to set some bootstrap configuration that allows
-this.  We just provide a dummy password since SSH keys are already in the image:
-
-  ./srx-provision "vagrant ssh srx1-left" root dummypw
-  ./srx-provision "vagrant ssh srx1-right" root dummypw
-
-Then you can ssh into the devices via their trust interface and test things out:
+You can ssh into the devices via their trust interface and test things out:
 
     ssh vagrant@172.16.10.10  # srx1-left
     ssh vagrant@172.16.20.10  # srx1-right
@@ -98,16 +92,7 @@ Check, then deploy:
 
 To bring up the tunnel:
 
-- The middle router will need forwarding enabled:
-
-      vagrant ssh middle
-      sudo -i
-      echo "1" > /proc/sys/net/ipv4/ip_forward
-
-  TODO: add this to a playbook with something like:
-
-      - name: Force sysctl line in /etc/sysctl.conf
-        lineinfile: dest=/etc/sysctl.conf line="net.ipv4.ip_forward = 1" insertafter=EOF state=present
+- The middle router requires no interaction, traffic will pass from left to right.
 
 - Ping down the tunnel to generate traffic:
 

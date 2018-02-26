@@ -1,5 +1,4 @@
 ---
-
 # Generate and apply configuration to devices.
 # Based loosely on https://github.com/dgjnpr/ansible-template-for-junos
 
@@ -7,23 +6,24 @@
 - name: Remove and re-create build directories for each host
   hosts: all
   connection: local
-  gather_facts: no
+  gather_facts: "no"
   tasks:
     - name: remove host build temp directory
       file: path={{ junos_build_dir }} state=absent
-      check_mode: no  # run even in check mode, so we can see diffs
+      check_mode: "no"  # run even in check mode, so we can see diffs
     - name: create host build temp directory
       file: path={{ junos_build_dir }} state=directory
-      check_mode: no  # run even in check mode, so we can see diffs
+      check_mode: "no"  # run even in check mode, so we can see diffs
     - name: remove host build temp directory
       file: path={{ junos_conf_file }} state=absent
-      check_mode: no  # run even in check mode, so we can see diffs
+      check_mode: "no"  # run even in check mode, so we can see diffs
 
-# Template out configuration fragments, for common parts and device-specific parts
+# Template out configuration fragments, for common parts and device-specific
+# parts
 - name: Create SRX configuration fragments
   hosts: vsrx
   connection: local
-  gather_facts: no
+  gather_facts: "no"
   roles:
     - common  # Common configuration
     - srx     # SRX-specifics
@@ -34,7 +34,7 @@
 # is triggered to push the configuration onto the device.
 - name: Assemble and commit configuration
   hosts: all
-  gather_facts: no
+  gather_facts: "no"
   roles:
     - Juniper.junos
   tasks:
@@ -44,15 +44,15 @@
         - Commit configuration via NETCONF
         # - Pushing config ... please wait
       delegate_to: localhost
-      check_mode: no  # run even in check mode, so we can see diffs
+      check_mode: "no"  # run even in check mode, so we can see diffs
 
   handlers:
 
     - name: Commit configuration via NETCONF
-      junos_install_config:
-        host: "{{ junos_config_hostname }}"
-        user: "{{ junos_config_user }}"  # This user's ssh key needs to be active
-        file: "{{ junos_conf_file }}"
-        overwrite: yes
+      junos_config:
+        provider: "{{ netconf }}"
+        src: "{{ junos_conf_file }}"
+        update: override
       delegate_to: localhost
-      when: junos_commit is defined   # Use -e 'junos_commit=true' to run the commit
+      # Use -e 'junos_commit=true' to run the commit
+      when: junos_commit is defined
