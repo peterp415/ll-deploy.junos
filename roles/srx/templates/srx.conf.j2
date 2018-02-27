@@ -6,7 +6,7 @@
 interfaces {
   {% for interface in junos_interfaces %}
   {{ interface.name }} {
-    unit 0 {
+  unit {{ interface.unit }} {
       family inet {
         address {{ interface.address }};
       }
@@ -94,6 +94,13 @@ security {
 
 {% if junos_ike_proposals or junos_ike_policies or security_ike_gateways %}
 security {
+  flow {
+    tcp-mss {
+      ipsec-vpn {
+        mss 1420;
+      }
+    }
+  }
   ike {
     {% for proposal in junos_ike_proposals %}
     proposal {{ proposal.name }} {
@@ -153,6 +160,8 @@ routing-options {
 {% endif %}
 
 {# Misc Blobs #}
+{% if junos_config_blobs is defined %}
 {% for blob in junos_config_blobs %}
 {{ blob.blob }}
 {% endfor %}
+{% endif %}

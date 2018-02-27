@@ -31,11 +31,17 @@ junos_common_config:
 #  set security zones security-zone untrust interfaces ge-0/0/2.0
 junos_interfaces:
   - name: "ge-0/0/1"
+    unit: "0"
     address: "172.16.20.10/24"
     zone: "trust"
   - name: "ge-0/0/2"
+    unit: "0"
     address: "172.16.200.20/24"
     zone: "untrust"
+  - name: "st0"
+    unit: "0"
+    address: "10.30.1.2/30"
+    zone: "vpn"
 
 # IPSec: ike gateways
 #  set security ike gateway SRX5600 ike-policy preshared
@@ -68,51 +74,3 @@ junos_routing_options:
       next_hop: 172.16.200.10
     - prefix: 172.16.10.0/24
       next_hop: st0.0
-
-# IPSec: Route-based stN interfaces (put this in junos_interfaces?)
-#  set interfaces st0 unit 0 multipoint
-#  set interfaces st0 unit 0 family inet address 10.30.1.1/30
-#  set security-zones security-zone vpn interfaces st0.0
-# VPN Zone policies
-#  set security zones security-zone vpn host-inbound-traffic system-services all
-#  set security zones security-zone vpn host-inbound-traffic protocols all
-#  set security policies from-zone trust to-zone vpn policy any match source-address any
-#  set security policies from-zone trust to-zone vpn policy any match destination-address any
-#  set security policies from-zone trust to-zone vpn policy any match application any
-#  set security policies from-zone trust to-zone vpn policy any then permit
-junos_config_blobs:
-  - name: "VPN Interface and Zone Policies"
-    blob: |
-        security flow tcp-mss ipsec-vpn mss 1420;
-        interfaces {
-          st0 unit 0 {
-            family inet address 10.30.1.2/30;
-          }
-        }
-        security zones security-zone vpn {
-          interfaces st0.0;
-          host-inbound-traffic {
-            system-services all;
-            protocols all;
-          }
-        }
-        security policies from-zone trust to-zone vpn policy any {
-          match {
-            source-address any;
-            destination-address any;
-            application any;
-          }
-          then {
-            permit;
-          }
-        }
-        security policies from-zone vpn to-zone trust policy any {
-          match {
-            source-address any;
-            destination-address any;
-            application any;
-          }
-          then {
-            permit;
-          }
-        }

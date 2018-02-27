@@ -132,6 +132,8 @@ junos_zones:
     host_inbound_traffic: ["system-services all", "protocols all"]
   - name: "untrust"
     host_inbound_traffic: ["system-services all", "protocols all"]
+  - name: "vpn"
+    host_inbound_traffic: ["system-services all", "protocols all"]
 # Basic zone-to-zone defaults
 #  set security policies from-zone trust to-zone trust policy default-permit match source-address any
 #  set security policies from-zone trust to-zone trust policy default-permit match destination-address any
@@ -167,6 +169,20 @@ junos_zone_security_policies:
       - name: "default-deny"
         match: ["source-address any", "destination-address any", "application any"]
         then: "deny"
+  - name: "trust-to-vpn"
+    from_zone: "trust"
+    to_zone: "vpn"
+    policies:
+      - name: "any"
+        match: ["source-address any", "destination-address any", "application any"]
+        then: "permit"
+  - name: "vpn-to-trust"
+    from_zone: "vpn"
+    to_zone: "trust"
+    policies:
+      - name: "any"
+        match: ["source-address any", "destination-address any", "application any"]
+        then: "permit"
 
 # IPSec VPNs
 
