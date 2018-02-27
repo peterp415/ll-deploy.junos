@@ -74,3 +74,41 @@ junos_routing_options:
       next_hop: 172.16.200.10
     - prefix: 172.16.10.0/24
       next_hop: st0.0
+
+# Misc Blobs
+# junos_config_blobs:
+#   - name: "VPN Interface and Zone Policies"
+#     blob: |
+#         security flow tcp-mss ipsec-vpn mss 1420;
+#         interfaces {
+#           st0 unit 0 {
+#             family inet address 10.30.1.1/30;
+#           }
+#         }
+#         security zones security-zone vpn {
+#           interfaces st0.0;
+#           host-inbound-traffic {
+#             system-services all;
+#             protocols all;
+#           }
+#         }
+#         security policies from-zone trust to-zone vpn policy any {
+#           match {
+#             source-address any;
+#             destination-address any;
+#             application any;
+#           }
+#           then {
+#             permit;
+#           }
+#         }
+#         security policies from-zone vpn to-zone trust policy any {
+#           match {
+#             source-address any;
+#             destination-address any;
+#             application any;
+#           }
+#           then {
+#             permit;
+#           }
+#         }
