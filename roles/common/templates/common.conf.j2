@@ -1,6 +1,40 @@
 {# Common configuration for all JunOS devices #}
 system {
     time-zone {{ junos_location.time_zone }};
+    license {
+        autoupdate {
+        url {{ junos_autoupdate_url }};
+        }
+    }
+    root-authentication {
+        encrypted-password "{{ junos_root_auth.encrypted_password }}";
+        ssh-rsa "{{ junos_root_auth.ssh_key }}";
+    }
+    services {
+        ssh {
+            {% if junos_ssh_root_login|capitalize == 'True' %}
+            root-login allow;
+            {% else %}
+            root-login deny;
+            {% endif %}
+        }
+        netconf {
+            ssh;
+        }
+    }
+    {% if junos_users is defined %}
+    login {
+        {% for user in junos_users %}
+        user {{ user.name }} {
+            uid {{ user.uid }};
+            class {{ user.class }};
+            authentication {
+                ssh-rsa "{{ user.ssh_key }}";
+            }
+        }
+        {% endfor %}
+    }
+    {% endif %}
 }
 
 {# Common Configuration Snippets #}
