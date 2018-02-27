@@ -138,6 +138,19 @@ security {
 }
 {% endif %}
 
+{# Routing Options #}
+
+{% if junos_routing_options %}
+routing-options {
+  {% if junos_routing_options.static_routes %}
+  static {
+  {% for static in junos_routing_options.static_routes %}
+    route {{ static.prefix }} next-hop {{ static.next_hop }};
+  {% endfor %}
+  }
+  {% endif %}
+}
+{% endif %}
 
 {# Misc Blobs #}
 {% for blob in junos_config_blobs %}
