@@ -10,7 +10,7 @@
 junos_interfaces:
   - name: "ge-0/0/0"
     unit: "0"
-    dhcp: "True"
+    address: "dhcp"
     zone: "management"
   - name: "ge-0/0/1"
     unit: "0"

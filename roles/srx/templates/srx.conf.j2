@@ -8,11 +8,10 @@ interfaces {
   {{ interface.name }} {
   unit {{ interface.unit }} {
       family inet {
-        {% if interface.address is defined %}
-        address {{ interface.address }};
-        {% endif %}
-        {% if interface.dhcp is defined and interface.dhcp|capitalize == 'True' %}
+        {% if interface.address is defined and interface.address|lower == 'dhcp' %}
         dhcp;
+        {% else %}
+        address {{ interface.address }};
         {% endif %}
       }
     }
