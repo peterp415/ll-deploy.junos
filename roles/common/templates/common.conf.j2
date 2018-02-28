@@ -1,5 +1,6 @@
 {# Common configuration for all JunOS devices #}
 system {
+    host-name {{ junos_config_hostname }};
     time-zone {{ junos_location.time_zone }};
     license {
         autoupdate {
@@ -76,18 +77,6 @@ security {
     }
     zones {
         functional-zone management {
-            interfaces {
-                ge-0/0/0.0 {
-                    host-inbound-traffic {
-                        system-services {
-                            all;
-                        }
-                        protocols {
-                            all;
-                        }
-                    }
-                }
-            }
         }
         security-zone trust {
             tcp-rst;

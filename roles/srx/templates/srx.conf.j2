@@ -8,7 +8,12 @@ interfaces {
   {{ interface.name }} {
   unit {{ interface.unit }} {
       family inet {
+        {% if interface.address is defined %}
         address {{ interface.address }};
+        {% endif %}
+        {% if interface.dhcp is defined and interface.dhcp|capitalize == 'True' %}
+        dhcp;
+        {% endif %}
       }
     }
   }
@@ -49,11 +54,30 @@ chassis {
 security {
   zones {
     {% for group in junos_interfaces|groupby('zone') %}
+    {% if group[0]|lower == 'management' %}
+    functional-zone management {
+      interfaces {
+        {% for interface in group[1] %}
+        {{ interface.name }}.{{ interface.unit }} {
+          host-inbound-traffic {
+              system-services {
+                  all;
+              }
+              protocols {
+                  all;
+              }
+          }
+        }
+        {% endfor %}
+      }
+    }
+    {% else %}
     security-zone {{ group[0] }} {
       {% for interface in group[1] %}
         interfaces {{ interface.name }}
       {% endfor %}
     }
+    {% endif %}
     {% endfor %}
   }
 }
