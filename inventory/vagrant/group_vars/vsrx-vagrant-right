@@ -8,6 +8,10 @@
 #  set security zones security-zone trust interfaces ge-0/0/1.0
 #  set security zones security-zone untrust interfaces ge-0/0/2.0
 junos_interfaces:
+  - name: "ge-0/0/0"
+    unit: "0"
+    dhcp: "True"
+    zone: "management"
   - name: "ge-0/0/1"
     unit: "0"
     address: "172.16.20.10/24"
