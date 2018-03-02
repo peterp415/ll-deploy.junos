@@ -6,9 +6,13 @@
 interfaces {
   {% for interface in junos_interfaces %}
   {{ interface.name }} {
-    unit 0 {
+  unit {{ interface.unit }} {
       family inet {
+        {% if interface.address is defined and interface.address|lower == 'dhcp' %}
+        dhcp;
+        {% else %}
         address {{ interface.address }};
+        {% endif %}
       }
     }
   }
@@ -49,11 +53,30 @@ chassis {
 security {
   zones {
     {% for group in junos_interfaces|groupby('zone') %}
+    {% if group[0]|lower == 'management' %}
+    functional-zone management {
+      interfaces {
+        {% for interface in group[1] %}
+        {{ interface.name }}.{{ interface.unit }} {
+          host-inbound-traffic {
+              system-services {
+                  all;
+              }
+              protocols {
+                  all;
+              }
+          }
+        }
+        {% endfor %}
+      }
+    }
+    {% else %}
     security-zone {{ group[0] }} {
       {% for interface in group[1] %}
         interfaces {{ interface.name }}
       {% endfor %}
     }
+    {% endif %}
     {% endfor %}
   }
 }
@@ -94,6 +117,13 @@ security {
 
 {% if junos_ike_proposals or junos_ike_policies or security_ike_gateways %}
 security {
+  flow {
+    tcp-mss {
+      ipsec-vpn {
+        mss 1420;
+      }
+    }
+  }
   ike {
     {% for proposal in junos_ike_proposals %}
     proposal {{ proposal.name }} {
@@ -138,8 +168,23 @@ security {
 }
 {% endif %}
 
+{# Routing Options #}
+
+{% if junos_routing_options %}
+routing-options {
+  {% if junos_routing_options.static_routes %}
+  static {
+  {% for static in junos_routing_options.static_routes %}
+    route {{ static.prefix }} next-hop {{ static.next_hop }};
+  {% endfor %}
+  }
+  {% endif %}
+}
+{% endif %}
 
 {# Misc Blobs #}
+{% if junos_config_blobs is defined %}
 {% for blob in junos_config_blobs %}
 {{ blob.blob }}
 {% endfor %}
+{% endif %}

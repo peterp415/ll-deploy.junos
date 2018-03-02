@@ -19,106 +19,16 @@ netconf:
 junos_location:
   time_zone: PST
 
-junos_common_config:
-  # Management Authorization
-  management_authorization: |
-    system {
-        root-authentication {
-            encrypted-password "$5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD";
-            ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key";
-        }
-        services {
-            ssh {
-                root-login allow;
-            }
-            netconf {
-                ssh;
-            }
-            web-management {
-                http {
-                    interface ge-0/0/0.0;
-                }
-            }
-        }
-    }
-  management_logins: |
-    system {
-        login {
-            user vagrant {
-                uid 2000;
-                class super-user;
-                authentication {
-                    ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key";
-                }
-            }
-        }
-    }
-  management_misc: |
-    system {
-        syslog {
-            user * {
-                any emergency;
-            }
-            file messages {
-                any any;
-                authorization info;
-            }
-            file interactive-commands {
-                interactive-commands any;
-            }
-        }
-        license {
-            autoupdate {
-                url https://ae1.juniper.net/junos/key_retrieval;
-            }
-        }
-    }
-    security {
-        screen {
-            ids-option untrust-screen {
-                icmp {
-                    ping-death;
-                }
-                ip {
-                    source-route-option;
-                    tear-drop;
-                }
-                tcp {
-                    syn-flood {
-                        alarm-threshold 1024;
-                        attack-threshold 200;
-                        source-threshold 1024;
-                        destination-threshold 2048;
-                        queue-size 2000; ## Warning: 'queue-size' is deprecated
-                        timeout 20;
-                    }
-                    land;
-                }
-            }
-        }
-        zones {
-            functional-zone management {
-                interfaces {
-                    ge-0/0/0.0 {
-                        host-inbound-traffic {
-                            system-services {
-                                all;
-                            }
-                            protocols {
-                                all;
-                            }
-                        }
-                    }
-                }
-            }
-            security-zone trust {
-                tcp-rst;
-            }
-            security-zone untrust {
-                screen untrust-screen;
-            }
-        }
-    }
+junos_ssh_root_login: "true"
+junos_root_auth:
+  encrypted_password: $5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD
+  ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+
+junos_users:
+  - name: vagrant
+    uid: 2000
+    class: super-user
+    ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
 
 # SRX template variables
 
@@ -131,6 +41,8 @@ junos_zones:
   - name: "trust"
     host_inbound_traffic: ["system-services all", "protocols all"]
   - name: "untrust"
+    host_inbound_traffic: ["system-services all", "protocols all"]
+  - name: "vpn"
     host_inbound_traffic: ["system-services all", "protocols all"]
 # Basic zone-to-zone defaults
 #  set security policies from-zone trust to-zone trust policy default-permit match source-address any
@@ -167,6 +79,20 @@ junos_zone_security_policies:
       - name: "default-deny"
         match: ["source-address any", "destination-address any", "application any"]
         then: "deny"
+  - name: "trust-to-vpn"
+    from_zone: "trust"
+    to_zone: "vpn"
+    policies:
+      - name: "any"
+        match: ["source-address any", "destination-address any", "application any"]
+        then: "permit"
+  - name: "vpn-to-trust"
+    from_zone: "vpn"
+    to_zone: "trust"
+    policies:
+      - name: "any"
+        match: ["source-address any", "destination-address any", "application any"]
+        then: "permit"
 
 # IPSec VPNs
 

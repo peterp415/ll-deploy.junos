@@ -1,10 +1,88 @@
 {# Common configuration for all JunOS devices #}
 system {
+    host-name {{ junos_config_hostname }};
     time-zone {{ junos_location.time_zone }};
+    license {
+        autoupdate {
+        url {{ junos_autoupdate_url }};
+        }
+    }
+    root-authentication {
+        encrypted-password "{{ junos_root_auth.encrypted_password }}";
+        ssh-rsa "{{ junos_root_auth.ssh_key }}";
+    }
+    {# Defaults for syslog from Juniper, could be templated if need in future #}
+    syslog {
+        user * {
+            any emergency;
+        }
+        file messages {
+            any any;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+    services {
+        ssh {
+            {% if junos_ssh_root_login|capitalize == 'True' %}
+            root-login allow;
+            {% else %}
+            root-login deny;
+            {% endif %}
+        }
+        netconf {
+            ssh;
+        }
+    }
+    {% if junos_users is defined %}
+    login {
+        {% for user in junos_users %}
+        user {{ user.name }} {
+            uid {{ user.uid }};
+            class {{ user.class }};
+            authentication {
+                ssh-rsa "{{ user.ssh_key }}";
+            }
+        }
+        {% endfor %}
+    }
+    {% endif %}
 }
 
-{# Common Configuration Snippets #}
-{% for name,blob in junos_common_config.items() %}
-# Common Configuration: {{ name }}
-{{ blob }}
-{% endfor %}
+{# Common security #}
+security {
+    screen {
+        ids-option untrust-screen {
+            icmp {
+                ping-death;
+            }
+            ip {
+                source-route-option;
+                tear-drop;
+            }
+            tcp {
+                syn-flood {
+                    alarm-threshold 1024;
+                    attack-threshold 200;
+                    source-threshold 1024;
+                    destination-threshold 2048;
+                    queue-size 2000; ## Warning: 'queue-size' is deprecated
+                    timeout 20;
+                }
+                land;
+            }
+        }
+    }
+    zones {
+        functional-zone management {
+        }
+        security-zone trust {
+            tcp-rst;
+        }
+        security-zone untrust {
+            screen untrust-screen;
+        }
+    }
+}

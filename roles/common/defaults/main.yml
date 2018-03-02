@@ -11,3 +11,6 @@ junos_config_user: root
 # Common template variables
 junos_location:
   time_zone: UTC
+
+junos_autoupdate_url: https://ae1.juniper.net/junos/key_retrieval
+junos_ssh_root_login: "False"
