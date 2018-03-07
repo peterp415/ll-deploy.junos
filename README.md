@@ -1,7 +1,14 @@
-# JunOS VPN Tunnel Deploy
+# JunOS Deploy
 
-This is a deploy for a set of JunOS virtual SRX images that implement the endpoints of
-a site-to-site VPN tunnel.
+This is a deploy for a set of JunOS virtual SRX images that implement:
+
+  - Basic host configuration
+    - Hostname
+    - Interface Configuration
+  - Security Zone Configuration
+  - Security Policies
+  - eBGP Peering
+  - Route Based IPSec 
 
 This README is admittedly way too long.  At least the parts about setting up different
 types of virtual networks and the information about how JunOS works should be separated out.
@@ -10,13 +17,9 @@ types of virtual networks and the information about how JunOS works should be se
 
 1. Create/activate a virtualenv for the project:
 
-        mkvirtualenv junos-vpn
+        mkvirtualenv -a `pwd` -r requirements.txt deploy.junos
 
-2. Install the python requirements (ansible):
-
-        pip install -r requirements.txt
-
-3. Install Ansible requirements (shared roles):
+2. Install Ansible requirements (shared roles):
 
         ansible-galaxy install -r requirements.yml -p shared-roles --force
 
@@ -43,6 +46,11 @@ The image from Juniper is their "firefly perimeter" device, running a JunOS 12.1
 
 This Vagrant deploy creates a test environment:
 
+Loopbacks:
+srx1-left: 169.254.254.1/32
+srx1-right: 169.254.254.2/32
+r1-middle: 169.254.254.254/32
+
             ge-0/0/0 Vagrant mgmt                                           ge-0/0/0 Vagrant mgmt
                  |                                                              |
            / srx1-left \                                                  / srx1-right \
@@ -52,7 +60,9 @@ This Vagrant deploy creates a test environment:
 
 In this environment, the `srx1-left` SRX and `srx1-right` SRX form a VPN tunnel connecting
 their local networks, through the `r1-middle host`, which acts as a router.  The `ge-0/0/2.0` interfaces
-are external VPN endpoints with "public" IPs.
+are external VPN endpoints with "public" IPs.  The `ge-0/0/1.0` interfaces are internal and reachable via
+the tunnel.  Prefixes are adverised by each router via eBGP through the tunnel.  The left and right routers
+are also peered via eBGP to r1-middle exchanging loopbacks.
 
 ### Vagrant SRX VM Bootstrap Configuration
 
@@ -89,6 +99,8 @@ Check, then deploy:
 
     ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-left --diff --check
     ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-left
+    ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-right --diff --check
+    ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-right
 
 To bring up the tunnel:
 
@@ -140,6 +152,34 @@ then try to bring up tunnel, and:
 A bunch of useful commands here:
 http://batdosi.blogspot.com/2014/01/troubleshoot-juniper-srx-vpn.html
 
+### BGP Debug
+
+To see a list of neighbors and their current status:
+
+    root@srx1-left.vagrant> show bgp summary
+    Groups: 2 Peers: 2 Down peers: 0
+    Table          Tot Paths  Act Paths Suppressed    History Damp State    Pending
+    inet.0                 3          3          0          0          0          0
+    Peer                     AS      InPkt     OutPkt    OutQ   Flaps Last Up/Dwn State|#Active/Received/Accepted/Damped...
+    10.30.1.2             65200         74         74       0       0       31:54 1/1/1/0              0/0/0/0
+    172.16.100.10         65000        142        141       0       0     1:01:51 2/2/2/0              0/0/0/0
+
+To see the prefixes you are receiving from a peer:
+
+    root@srx1-left.vagrant> show route receive-protocol bgp 172.16.100.10
+
+    inet.0: 14 destinations, 16 routes (14 active, 0 holddown, 0 hidden)
+      Prefix                  Nexthop              MED     Lclpref    AS path
+      * 169.254.254.2/32        172.16.100.10                           65000 65200 I
+      * 169.254.254.254/32      172.16.100.10                           65000 I
+
+To see the prefixes you are advertising to a peer:
+
+    root@srx1-left.vagrant> show route advertising-protocol bgp 10.30.1.2
+
+    inet.0: 14 destinations, 16 routes (14 active, 0 holddown, 0 hidden)
+      Prefix                  Nexthop              MED     Lclpref    AS path
+      * 172.16.10.0/24          Self                                    I
 
 ## KVM Deploy
 
