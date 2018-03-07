@@ -73,7 +73,7 @@ security {
     {% else %}
     security-zone {{ group[0] }} {
       {% for interface in group[1] %}
-        interfaces {{ interface.name }}
+        interfaces {{ interface.name }}.{{ interface.unit }};
       {% endfor %}
     }
     {% endif %}
