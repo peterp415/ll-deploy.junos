@@ -490,7 +490,7 @@ https://www.juniper.net/support/tools/vpnconfig/
 
 To use rollback, enacting a previous state:
 
-    root@srx1-right> show system commit                  
+    root@srx1-right> show system commit
     0   2016-12-07 00:25:10 UTC by root via netconf
         Pushing config ... please wait
     1   2016-12-06 22:29:09 UTC by root via cli
@@ -798,7 +798,7 @@ What's up with the "Linux" ?
       Booting `Juniper Linux`
 
     Loading Linux ...
-    Consoles: serial port  
+    Consoles: serial port
     BIOS drive C: is disk0
     BIOS drive D: is disk1
     BIOS drive E: is disk2
@@ -839,7 +839,7 @@ Some interesting boot devices and messages:
 
 Before "set chassis cluster"
 
-    root@srx1-left> show interfaces terse                           
+    root@srx1-left> show interfaces terse
     Interface               Admin Link Proto    Local                 Remote
     ge-0/0/0                up    up
     gr-0/0/0                up    up
@@ -848,22 +848,22 @@ Before "set chassis cluster"
     lt-0/0/0                up    up
     mt-0/0/0                up    up
     sp-0/0/0                up    up
-    sp-0/0/0.0              up    up   inet    
-                                       inet6   
-    sp-0/0/0.16383          up    up   inet    
+    sp-0/0/0.0              up    up   inet
+                                       inet6
+    sp-0/0/0.16383          up    up   inet
     ge-0/0/1                up    up
     ge-0/0/2                up    up
     ge-0/0/3                up    up
     dsc                     up    up
     em0                     up    up
-    em0.0                   up    up   inet     128.0.0.1/2     
+    em0.0                   up    up   inet     128.0.0.1/2
     em1                     up    up
-    em1.32768               up    up   inet     192.168.1.2/24  
+    em1.32768               up    up   inet     192.168.1.2/24
     em2                     up    up
     fxp0                    up    up
     fxp0.0                  up    up   inet     192.168.122.118/24
     gre                     up    up
-    ipip                    up    up        
+    ipip                    up    up
     irb                     up    up
     lo0                     up    up
     lo0.16384               up    up   inet     127.0.0.1           --> 0/0
@@ -872,7 +872,7 @@ Before "set chassis cluster"
                                                 128.0.0.1           --> 0/0
                                                 128.0.0.4           --> 0/0
                                                 128.0.1.16          --> 0/0
-    lo0.32768               up    up  
+    lo0.32768               up    up
     lsi                     up    up
     mtun                    up    up
     pimd                    up    up
@@ -897,14 +897,14 @@ After "set chassis cluster"
     ge-0/0/2                up    up
     dsc                     up    up
     em0                     up    up
-    em0.0                   up    up   inet     129.16.0.1/2    
-                                                143.16.0.1/2    
-                                       tnp      0x1100001       
+    em0.0                   up    up   inet     129.16.0.1/2
+                                                143.16.0.1/2
+                                       tnp      0x1100001
     em1                     up    up
-    em1.32768               up    up   inet     192.168.1.2/24  
+    em1.32768               up    up   inet     192.168.1.2/24
     em2                     up    up
     fab0                    up    down
-    fab0.0                  up    down inet     30.17.0.200/24  
+    fab0.0                  up    down inet     30.17.0.200/24
     fxp0                    up    up
     fxp0.0                  up    up   inet     192.168.122.118/24
     gre                     up    up
