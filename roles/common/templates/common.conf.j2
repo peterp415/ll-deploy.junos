@@ -1,3 +1,4 @@
+#jinja2:lstrip_blocks: True
 {# Common configuration for all JunOS devices #}
 system {
     host-name {{ junos_config_hostname }};
@@ -86,3 +87,49 @@ security {
         }
     }
 }
+
+{# BGP #}
+{% if junos_bgp_groups is defined %}
+protocols {
+    bgp {
+        {% for group in junos_bgp_groups %}
+        group {{ group.name }} {
+            type {{ group.type }};
+            local-as {{ group.local_asn }};
+            {% if group.export_policy is defined %}
+            export {{ group.export_policy }};
+            {% endif %}
+            {% for neighbor in group.neighbors %}
+            neighbor {{ neighbor.address }} {
+                peer-as {{ neighbor.asn }};
+            }
+            {% endfor %}
+        }
+        {% endfor %}
+    }
+}
+{% endif %}
+
+{# Policy Options #}
+{% if junos_policy_options %}
+policy-options {
+    {% for policy in junos_policy_options %}
+    policy-statement {{ policy.name }} {
+        {% for term in policy.terms %}
+        term {{ term.name }} {
+            from {
+                {% if term.protocol is defined %}
+                protocol {{ term.protocol }};
+                {% endif %}
+                {% if term.route_filter is defined %}
+                route-filter {{ term.route_filter }};
+                {% endif %}
+            }
+            then {{ term.action }};
+        }
+        {% endfor %}
+        then {{ policy.action }};
+    }
+    {% endfor %}
+}
+{% endif %}

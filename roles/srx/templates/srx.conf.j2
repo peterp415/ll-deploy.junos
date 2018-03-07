@@ -172,6 +172,9 @@ security {
 
 {% if junos_routing_options %}
 routing-options {
+  {% if junos_routing_options.router_id is defined %}
+  router-id {{ junos_routing_options.router_id }};
+  {% endif %}
   {% if junos_routing_options.static_routes %}
   static {
   {% for static in junos_routing_options.static_routes %}

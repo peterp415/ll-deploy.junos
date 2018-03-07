@@ -8,6 +8,10 @@
 #  set security zones security-zone trust interfaces ge-0/0/1.0
 #  set security zones security-zone untrust interfaces ge-0/0/2.0
 junos_interfaces:
+  - name: "lo0"
+    unit: "0"
+    address: "169.254.254.1/32"
+    zone: "untrust"
   - name: "ge-0/0/0"
     unit: "0"
     address: "dhcp"
@@ -51,11 +55,42 @@ junos_ipsec_vpns:
 # set routing-options static route 172.16.200.0/24 next-hop 172.16.100.10
 # set routing-options static route 172.16.20.0/24 next-hop st0.0
 junos_routing_options:
+  router_id: 169.254.254.1
   static_routes:
     - prefix: 172.16.200.0/24
       next_hop: 172.16.100.10
-    - prefix: 172.16.20.0/24
-      next_hop: st0.0
+
+junos_bgp_groups:
+  - name: external
+    type: external
+    local_asn: 65100
+    export_policy: advertise-loopback
+    neighbors:
+      - address: 172.16.100.10
+        asn: 65000
+  - name: ipsec
+    type: external
+    local_asn: 65100
+    export_policy: advertise-trust
+    neighbors:
+      - address: 10.30.1.2
+        asn: 65200
+
+junos_policy_options:
+  - name: advertise-loopback
+    action: reject
+    terms:
+      - name: 10
+        protocol: direct
+        route_filter: 169.254.254.1/32 exact
+        action: accept
+  - name: advertise-trust
+    action: reject
+    terms:
+      - name: 10
+        protocol: direct
+        route_filter: 172.16.10.0/24 exact
+        action: accept
 
 # Misc Blobs
 # junos_config_blobs:
