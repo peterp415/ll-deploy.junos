@@ -8,7 +8,7 @@ This is a deploy for a set of JunOS virtual SRX images that implement:
   - Security Zone Configuration
   - Security Policies
   - eBGP Peering
-  - Route Based IPSec 
+  - Route Based IPSec
 
 This README is admittedly way too long.  At least the parts about setting up different
 types of virtual networks and the information about how JunOS works should be separated out.
