@@ -34,6 +34,45 @@ types of virtual networks and the information about how JunOS works should be se
   configurations will be generated but the commit step will be skipped.
   You can use the usual `--check` and `--diff` flags as well.
 
+## Role Variables
+
+### Routing Variables
+
+    # Hash matching the Routing-Options stanza of the Junos config.  A
+    # `router_id` is required when using OSPF or BGP.
+    junos_routing_options:
+      router_id: 192.168.254.254
+      static_routes:
+        - prefix: 192.168.1.0/24
+          next_hop: 192.168.2.1
+
+    # Hash containing the needed bits for BGP group(s) configuration.  Be sure
+    # to set the `router_id` in the `junos_routing_options` hash when setting
+    # up BGP.
+    junos_bgp_groups:
+      - name: eBGP
+        type: external
+        local_asn: 65000
+        export_poilcy: advertise-my-prefixes
+        neighbors:
+          - address: 192.168.129.11
+            asn: 65100
+
+    # Hash containing the needed bits to create policies.
+    junos_policy_options:
+      communities:
+        - name: internap-secondary
+          members: "[65025:14743]"
+      policies:
+        - name: advertise-my-prefixes
+          action: reject
+          as_path_prepend: 65000 65000 65000
+          terms:
+            - name: prefix-1
+              protocol: direct
+              route_filter: 192.168.2.0/24
+              action: accept
+
 ## Vagrant deploy - VirtualBox
 
 The VirtualBox deploy uses a Vagrant box from Juniper that requires the `vagrant-junos`
