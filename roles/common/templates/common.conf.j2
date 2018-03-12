@@ -111,9 +111,9 @@ protocols {
 {% endif %}
 
 {# Policy Options #}
-{% if junos_policy_options %}
+{% if junos_policy_options is defined %}
 policy-options {
-    {% for policy in junos_policy_options %}
+    {% for policy in junos_policy_options.policies %}
     policy-statement {{ policy.name }} {
         {% for term in policy.terms %}
         term {{ term.name }} {
@@ -128,8 +128,22 @@ policy-options {
             then {{ term.action }};
         }
         {% endfor %}
+        {% if policy.community is defined or policy.as_path_prepend is defined %}
+        then {
+            {% if policy.community is defined %}
+            community set {{ policy.community }};
+            {% elif policy.as_path_prepend is defined %}
+            as-path-prepend "{{ policy.as_path_prepend }}";
+            {% endif %}
+            {{ policy.action }};
+        }
+        {% else %}
         then {{ policy.action }};
+        {% endif %}
     }
+    {% endfor %}
+    {% for community in junos_policy_options.communities %}
+    community {{ community.name }} members {{ community.members }};
     {% endfor %}
 }
 {% endif %}
