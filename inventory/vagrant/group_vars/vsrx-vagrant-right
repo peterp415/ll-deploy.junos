@@ -77,20 +77,21 @@ junos_bgp_groups:
         asn: 65100
 
 junos_policy_options:
-  - name: advertise-loopback
-    action: reject
-    terms:
-      - name: 10
-        protocol: direct
-        route_filter: 169.254.254.2/32 exact
-        action: accept
-  - name: advertise-trust
-    action: reject
-    terms:
-      - name: 10
-        protocol: direct
-        route_filter: 172.16.20.0/24 exact
-        action: accept
+  policies:
+    - name: advertise-loopback
+      action: reject
+      terms:
+        - name: 10
+          protocol: direct
+          route_filter: 169.254.254.2/32 exact
+          action: accept
+    - name: advertise-trust
+      action: reject
+      terms:
+        - name: 10
+          protocol: direct
+          route_filter: 172.16.20.0/24 exact
+          action: accept
 
 # Misc Blobs
 # junos_config_blobs:

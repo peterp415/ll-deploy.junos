@@ -142,8 +142,10 @@ policy-options {
         {% endif %}
     }
     {% endfor %}
+    {% if junos_policy_options.communities is defined %}
     {% for community in junos_policy_options.communities %}
     community {{ community.name }} members {{ community.members }};
     {% endfor %}
+    {% endif %}
 }
 {% endif %}
