@@ -1,22 +1,25 @@
-# JunOS VPN Tunnel Deploy
+# JunOS Deploy
 
-This is a deploy for a set of JunOS virtual SRX images that implement the endpoints of
-a site-to-site VPN tunnel.
+This is a deploy for a set of JunOS virtual SRX images that implement:
+
+  - Basic host configuration
+    - Hostname
+    - Interface Configuration
+  - Security Zone Configuration
+  - Security Policies
+  - eBGP Peering
+  - Route Based IPSec
 
 This README is admittedly way too long.  At least the parts about setting up different
 types of virtual networks and the information about how JunOS works should be separated out.
 
 ## Getting started
 
-1. Create/activate a virtualenv for the project:
+1. Create/activate a virtualenv for the project and install requirements:
 
-        mkvirtualenv junos-vpn
+        pip -r requirements.txt
 
-2. Install the python requirements (ansible):
-
-        pip install -r requirements.txt
-
-3. Install Ansible requirements (shared roles):
+2. Install Ansible requirements (shared roles):
 
         ansible-galaxy install -r requirements.yml -p shared-roles --force
 
@@ -31,6 +34,45 @@ types of virtual networks and the information about how JunOS works should be se
   configurations will be generated but the commit step will be skipped.
   You can use the usual `--check` and `--diff` flags as well.
 
+## Role Variables
+
+### Routing Variables
+
+    # Hash matching the Routing-Options stanza of the Junos config.  A
+    # `router_id` is required when using OSPF or BGP.
+    junos_routing_options:
+      router_id: 192.168.254.254 # router_id is required
+      static_routes:
+        - prefix: 192.168.1.0/24
+          next_hop: 192.168.2.1
+
+    # Hash containing the needed bits for BGP group(s) configuration.  Be sure
+    # to set the `router_id` in the `junos_routing_options` hash when setting
+    # up BGP.
+    junos_bgp_groups:
+      - name: eBGP
+        type: external
+        local_asn: 65000
+        export_poilcy: advertise-my-prefixes
+        neighbors:
+          - address: 192.168.129.11
+            asn: 65100
+
+    # Hash containing the needed bits to create policies.
+    junos_policy_options:
+      communities:
+        - name: internap-secondary
+          members: "[65025:14743]"
+      policies:
+        - name: advertise-my-prefixes
+          action: reject
+          as_path_prepend: 65000 65000 65000
+          terms:
+            - name: prefix-1
+              protocol: direct
+              route_filter: 192.168.2.0/24
+              action: accept
+
 ## Vagrant deploy - VirtualBox
 
 The VirtualBox deploy uses a Vagrant box from Juniper that requires the `vagrant-junos`
@@ -43,6 +85,11 @@ The image from Juniper is their "firefly perimeter" device, running a JunOS 12.1
 
 This Vagrant deploy creates a test environment:
 
+Loopbacks:
+srx1-left: 169.254.254.1/32
+srx1-right: 169.254.254.2/32
+r1-middle: 169.254.254.254/32
+
             ge-0/0/0 Vagrant mgmt                                           ge-0/0/0 Vagrant mgmt
                  |                                                              |
            / srx1-left \                                                  / srx1-right \
@@ -52,7 +99,9 @@ This Vagrant deploy creates a test environment:
 
 In this environment, the `srx1-left` SRX and `srx1-right` SRX form a VPN tunnel connecting
 their local networks, through the `r1-middle host`, which acts as a router.  The `ge-0/0/2.0` interfaces
-are external VPN endpoints with "public" IPs.
+are external VPN endpoints with "public" IPs.  The `ge-0/0/1.0` interfaces are internal and reachable via
+the tunnel.  Prefixes are adverised by each router via eBGP through the tunnel.  The left and right routers
+are also peered via eBGP to r1-middle exchanging loopbacks.
 
 ### Vagrant SRX VM Bootstrap Configuration
 
@@ -89,6 +138,8 @@ Check, then deploy:
 
     ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-left --diff --check
     ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-left
+    ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-right --diff --check
+    ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true' -l srx1-right
 
 To bring up the tunnel:
 
@@ -140,6 +191,34 @@ then try to bring up tunnel, and:
 A bunch of useful commands here:
 http://batdosi.blogspot.com/2014/01/troubleshoot-juniper-srx-vpn.html
 
+### BGP Debug
+
+To see a list of neighbors and their current status:
+
+    root@srx1-left.vagrant> show bgp summary
+    Groups: 2 Peers: 2 Down peers: 0
+    Table          Tot Paths  Act Paths Suppressed    History Damp State    Pending
+    inet.0                 3          3          0          0          0          0
+    Peer                     AS      InPkt     OutPkt    OutQ   Flaps Last Up/Dwn State|#Active/Received/Accepted/Damped...
+    10.30.1.2             65200         74         74       0       0       31:54 1/1/1/0              0/0/0/0
+    172.16.100.10         65000        142        141       0       0     1:01:51 2/2/2/0              0/0/0/0
+
+To see the prefixes you are receiving from a peer:
+
+    root@srx1-left.vagrant> show route receive-protocol bgp 172.16.100.10
+
+    inet.0: 14 destinations, 16 routes (14 active, 0 holddown, 0 hidden)
+      Prefix                  Nexthop              MED     Lclpref    AS path
+      * 169.254.254.2/32        172.16.100.10                           65000 65200 I
+      * 169.254.254.254/32      172.16.100.10                           65000 I
+
+To see the prefixes you are advertising to a peer:
+
+    root@srx1-left.vagrant> show route advertising-protocol bgp 10.30.1.2
+
+    inet.0: 14 destinations, 16 routes (14 active, 0 holddown, 0 hidden)
+      Prefix                  Nexthop              MED     Lclpref    AS path
+      * 172.16.10.0/24          Self                                    I
 
 ## KVM Deploy
 
@@ -490,7 +569,7 @@ https://www.juniper.net/support/tools/vpnconfig/
 
 To use rollback, enacting a previous state:
 
-    root@srx1-right> show system commit                  
+    root@srx1-right> show system commit
     0   2016-12-07 00:25:10 UTC by root via netconf
         Pushing config ... please wait
     1   2016-12-06 22:29:09 UTC by root via cli
@@ -798,7 +877,7 @@ What's up with the "Linux" ?
       Booting `Juniper Linux`
 
     Loading Linux ...
-    Consoles: serial port  
+    Consoles: serial port
     BIOS drive C: is disk0
     BIOS drive D: is disk1
     BIOS drive E: is disk2
@@ -839,7 +918,7 @@ Some interesting boot devices and messages:
 
 Before "set chassis cluster"
 
-    root@srx1-left> show interfaces terse                           
+    root@srx1-left> show interfaces terse
     Interface               Admin Link Proto    Local                 Remote
     ge-0/0/0                up    up
     gr-0/0/0                up    up
@@ -848,22 +927,22 @@ Before "set chassis cluster"
     lt-0/0/0                up    up
     mt-0/0/0                up    up
     sp-0/0/0                up    up
-    sp-0/0/0.0              up    up   inet    
-                                       inet6   
-    sp-0/0/0.16383          up    up   inet    
+    sp-0/0/0.0              up    up   inet
+                                       inet6
+    sp-0/0/0.16383          up    up   inet
     ge-0/0/1                up    up
     ge-0/0/2                up    up
     ge-0/0/3                up    up
     dsc                     up    up
     em0                     up    up
-    em0.0                   up    up   inet     128.0.0.1/2     
+    em0.0                   up    up   inet     128.0.0.1/2
     em1                     up    up
-    em1.32768               up    up   inet     192.168.1.2/24  
+    em1.32768               up    up   inet     192.168.1.2/24
     em2                     up    up
     fxp0                    up    up
     fxp0.0                  up    up   inet     192.168.122.118/24
     gre                     up    up
-    ipip                    up    up        
+    ipip                    up    up
     irb                     up    up
     lo0                     up    up
     lo0.16384               up    up   inet     127.0.0.1           --> 0/0
@@ -872,7 +951,7 @@ Before "set chassis cluster"
                                                 128.0.0.1           --> 0/0
                                                 128.0.0.4           --> 0/0
                                                 128.0.1.16          --> 0/0
-    lo0.32768               up    up  
+    lo0.32768               up    up
     lsi                     up    up
     mtun                    up    up
     pimd                    up    up
@@ -897,14 +976,14 @@ After "set chassis cluster"
     ge-0/0/2                up    up
     dsc                     up    up
     em0                     up    up
-    em0.0                   up    up   inet     129.16.0.1/2    
-                                                143.16.0.1/2    
-                                       tnp      0x1100001       
+    em0.0                   up    up   inet     129.16.0.1/2
+                                                143.16.0.1/2
+                                       tnp      0x1100001
     em1                     up    up
-    em1.32768               up    up   inet     192.168.1.2/24  
+    em1.32768               up    up   inet     192.168.1.2/24
     em2                     up    up
     fab0                    up    down
-    fab0.0                  up    down inet     30.17.0.200/24  
+    fab0.0                  up    down inet     30.17.0.200/24
     fxp0                    up    up
     fxp0.0                  up    up   inet     192.168.122.118/24
     gre                     up    up
