@@ -15,9 +15,9 @@ types of virtual networks and the information about how JunOS works should be se
 
 ## Getting started
 
-1. Create/activate a virtualenv for the project:
+1. Create/activate a virtualenv for the project and install requirements:
 
-        mkvirtualenv -a `pwd` -r requirements.txt deploy.junos
+        pip -r requirements.txt
 
 2. Install Ansible requirements (shared roles):
 
@@ -41,7 +41,7 @@ types of virtual networks and the information about how JunOS works should be se
     # Hash matching the Routing-Options stanza of the Junos config.  A
     # `router_id` is required when using OSPF or BGP.
     junos_routing_options:
-      router_id: 192.168.254.254
+      router_id: 192.168.254.254 # router_id is required
       static_routes:
         - prefix: 192.168.1.0/24
           next_hop: 192.168.2.1

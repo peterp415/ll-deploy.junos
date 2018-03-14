@@ -54,6 +54,8 @@ junos_ipsec_vpns:
 # Routing-Options
 # set routing-options static route 172.16.200.0/24 next-hop 172.16.100.10
 # set routing-options static route 172.16.20.0/24 next-hop st0.0
+# When using exit interfaces as the next-hop, please remember that they
+# must be a point-to-point interface.
 junos_routing_options:
   router_id: 169.254.254.1
   static_routes:
