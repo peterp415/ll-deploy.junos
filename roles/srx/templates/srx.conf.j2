@@ -4,19 +4,6 @@
 {# Ethernet Interfaces, reth and their zones #}
 
 interfaces {
-  {% for interface in junos_interfaces %}
-  {{ interface.name }} {
-  unit {{ interface.unit }} {
-      family inet {
-        {% if interface.address is defined and interface.address|lower == 'dhcp' %}
-        dhcp;
-        {% else %}
-        address {{ interface.address }};
-        {% endif %}
-      }
-    }
-  }
-  {% endfor %}
   {% for interface in junos_cluster_reth_interfaces %}
   {{ interface.name }} {
     redundant-ether-options redundancy-group {{ interface.redundancy_group }};
@@ -168,20 +155,41 @@ security {
 }
 {% endif %}
 
-{# Routing Options #}
-
-{% if junos_routing_options %}
-routing-options {
-  router-id {{ junos_routing_options.router_id | mandatory }};
-  {% if junos_routing_options.static_routes %}
-  static {
-  {% for static in junos_routing_options.static_routes %}
-    route {{ static.prefix }} next-hop {{ static.next_hop }};
-  {% endfor %}
-  }
-  {% endif %}
+{# Common security #}
+security {
+    screen {
+        ids-option untrust-screen {
+            icmp {
+                ping-death;
+            }
+            ip {
+                source-route-option;
+                tear-drop;
+            }
+            tcp {
+                syn-flood {
+                    alarm-threshold 1024;
+                    attack-threshold 200;
+                    source-threshold 1024;
+                    destination-threshold 2048;
+                    queue-size 2000; ## Warning: 'queue-size' is deprecated
+                    timeout 20;
+                }
+                land;
+            }
+        }
+    }
+    zones {
+        functional-zone management {
+        }
+        security-zone trust {
+            tcp-rst;
+        }
+        security-zone untrust {
+            screen untrust-screen;
+        }
+    }
 }
-{% endif %}
 
 {# Misc Blobs #}
 {% if junos_config_blobs is defined %}
