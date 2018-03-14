@@ -52,41 +52,36 @@ system {
     {% endif %}
 }
 
-{# Common security #}
-security {
-    screen {
-        ids-option untrust-screen {
-            icmp {
-                ping-death;
-            }
-            ip {
-                source-route-option;
-                tear-drop;
-            }
-            tcp {
-                syn-flood {
-                    alarm-threshold 1024;
-                    attack-threshold 200;
-                    source-threshold 1024;
-                    destination-threshold 2048;
-                    queue-size 2000; ## Warning: 'queue-size' is deprecated
-                    timeout 20;
-                }
-                land;
-            }
-        }
+interfaces {
+  {% for interface in junos_interfaces %}
+  {{ interface.name }} {
+  unit {{ interface.unit }} {
+      family inet {
+        {% if interface.address is defined and interface.address|lower == 'dhcp' %}
+        dhcp;
+        {% else %}
+        address {{ interface.address }};
+        {% endif %}
+      }
     }
-    zones {
-        functional-zone management {
-        }
-        security-zone trust {
-            tcp-rst;
-        }
-        security-zone untrust {
-            screen untrust-screen;
-        }
-    }
+  }
+  {% endfor %}
 }
+
+{# Routing Options #}
+
+{% if junos_routing_options %}
+routing-options {
+  router-id {{ junos_routing_options.router_id | mandatory }};
+  {% if junos_routing_options.static_routes %}
+  static {
+  {% for static in junos_routing_options.static_routes %}
+    route {{ static.prefix }} next-hop {{ static.next_hop }};
+  {% endfor %}
+  }
+  {% endif %}
+}
+{% endif %}
 
 {# BGP #}
 {% if junos_bgp_groups is defined %}
