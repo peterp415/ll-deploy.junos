@@ -83,6 +83,32 @@ routing-options {
 }
 {% endif %}
 
+{# OSPF #}
+{% if junos_ospf is defined %}
+protocols {
+  ospf {
+    reference-bandwidth {{ junos_ospf_reference_bw }};
+    {% for area in junos_ospf.areas %}
+    area {{ area.id }} {
+      {% for interface in area.interfaces %}
+      {% if interface.passive is defined %}
+      interface {{ interface.name }} {
+        passive;
+      }
+      {% else %}
+      interface {{ interface.name }} {
+        {% if interface.p2p is defined %}
+        interface-type p2p;
+        {% endif %}
+      }
+      {% endif %}
+      {% endfor %}
+    }
+    {% endfor %}
+  }
+}
+{% endif %}
+
 {# BGP #}
 {% if junos_bgp_groups is defined %}
 protocols {

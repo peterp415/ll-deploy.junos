@@ -86,6 +86,18 @@ junos_policy_options:
           route_filter: 172.16.20.0/24 exact
           action: accept
 
+# OSPF
+junos_ospf:
+  areas:
+    - id: 0
+      interfaces:
+        - name: lo0.0
+          passive: "True"
+        - name: st0.0
+          p2p: "True"
+        - name: ge-0/0/1
+          passive: "True"
+
 # Misc Blobs
 # junos_config_blobs:
 #   - name: "VPN Interface and Zone Policies"
