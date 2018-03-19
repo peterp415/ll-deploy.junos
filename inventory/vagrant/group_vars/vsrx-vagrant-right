@@ -57,33 +57,26 @@ junos_ipsec_vpns:
 junos_routing_options:
   router_id: 169.254.254.2
   static_routes:
-    - prefix: 172.16.100.0/24
+    - prefix: 172.16.0.0/24
       next_hop: 172.16.200.10
 
 junos_bgp_groups:
   - name: external
     type: external
     local_asn: 65200
-    export_policy: advertise-loopback
+    export_policy: advertise-external
     neighbors:
       - address: 172.16.200.10
         asn: 65000
-  - name: ipsec
-    type: external
-    local_asn: 65200
-    export_policy: advertise-trust
-    neighbors:
-      - address: 10.30.1.1
-        asn: 65100
 
 junos_policy_options:
   policies:
-    - name: advertise-loopback
+    - name: advertise-external
       action: reject
       terms:
         - name: 10
           protocol: direct
-          route_filter: 169.254.254.2/32 exact
+          route_filter: 172.16.0.0/16 orlonger
           action: accept
     - name: advertise-trust
       action: reject
