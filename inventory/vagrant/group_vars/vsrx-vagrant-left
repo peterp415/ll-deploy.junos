@@ -113,6 +113,8 @@ junos_ospf:
         - name: lo0.0
           passive: "True"
         - name: st0.0
+          hello_interval: 5
+          dead_interval: 20
           p2p: "True"
           auth:
             - id: 1

@@ -97,6 +97,12 @@ protocols {
       }
       {% else %}
       interface {{ interface.name }} {
+        {% if interface.hello_interval is defined %}
+        hello-interval {{ interface.hello_interval }};
+        {% endif %}
+        {% if interface.dead_interval is defined %}
+        dead-interval {{ interface.dead_interval }};
+        {% endif %}
         {% if interface.p2p is defined %}
         interface-type p2p;
         {% endif %}
