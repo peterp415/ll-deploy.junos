@@ -100,6 +100,13 @@ protocols {
         {% if interface.p2p is defined %}
         interface-type p2p;
         {% endif %}
+        {% if interface.auth is defined %}
+        authentication {
+          {% for item in interface.auth %}
+          md5 {{ item.id }} key "{{ item.phrase }}";
+          {% endfor %}
+        }
+        {% endif %}
       }
       {% endif %}
       {% endfor %}
