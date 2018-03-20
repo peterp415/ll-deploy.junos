@@ -87,6 +87,11 @@ Hash matching the Routing-Options stanza of the Junos config.  A `router_id` is 
 #### OSPF
 
     junos_ospf:
+      import:
+        - policy-one
+        - policy-two
+      export:
+        - policy-three
       areas:
         - id: 0  # The area can also be written as 0.0.0.0
           interfaces:
@@ -101,7 +106,7 @@ Hash matching the Routing-Options stanza of the Junos config.  A `router_id` is 
               hello_interval: 5
               dead_interval: 20
 
-Hash containing the needed information to configure OSPF and OSPF areas.  The `passive` key allows for the interfaces address(es) to be advertised via OSPF, but not form neighbor relationships.  Setting the `passive` variable will configure the interface as passive.  The `p2p` key allows for the overriding of the network type within OSPF.  Setting `p2p` to anything will change the interface-type to p2p.  The hello and dead intervals can be override from the defaults via `hello_interval` and `dead_interval`.  The time is given in seconds.
+Hash containing the needed information to configure OSPF and OSPF areas.  The `import` and `export` keys expects a list of the policies to be imported or exported via OSPF.  The `passive` key allows for the interfaces address(es) to be advertised via OSPF, but not form neighbor relationships.  Setting the `passive` variable will configure the interface as passive.  The `p2p` key allows for the overriding of the network type within OSPF.  Setting `p2p` to anything will change the interface-type to p2p.  The hello and dead intervals can be override from the defaults via `hello_interval` and `dead_interval`.  The time is given in seconds.
 
 #### BGP
 

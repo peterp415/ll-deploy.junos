@@ -88,6 +88,12 @@ routing-options {
 protocols {
   ospf {
     reference-bandwidth {{ junos_ospf_reference_bw }};
+    {% if junos_ospf.import is defined %}
+    import [ {% for policy in junos_ospf.import %}{{ policy }} {% endfor %}];
+    {% endif %}
+    {% if junos_ospf.export is defined %}
+    export [ {% for policy in junos_ospf.export %}{{ policy }} {% endfor %}];
+    {% endif %}
     {% for area in junos_ospf.areas %}
     area {{ area.id }} {
       {% for interface in area.interfaces %}
