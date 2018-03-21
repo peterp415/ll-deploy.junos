@@ -76,66 +76,82 @@ types of virtual networks and the information about how JunOS works should be se
 
 #### Routing Options
 
-    junos_routing_options:
-      router_id: 192.168.254.254 # router_id is required
-      static_routes:
-        - prefix: 192.168.1.0/24
-          next_hop: 192.168.2.1
+```yaml
+junos_routing_options:
+  router_id: 192.168.254.254 # router_id is required
+  static_routes:
+    - prefix: 192.168.1.0/24
+      next_hop: 192.168.2.1
+```
 
 Hash matching the Routing-Options stanza of the Junos config.  A `router_id` is required when using OSPF or BGP.
 
 #### OSPF
 
-    junos_ospf:
-      import:
-        - policy-one
-        - policy-two
-      export:
-        - policy-three
-      areas:
-        - id: 0  # The area can also be written as 0.0.0.0
-          interfaces:
-            - name: lo0.0
-              passive: "True"
-            - name: st0.0
-              p2p: true  # Optional, Junos will default to interface type
-              auth:
-                - id: 1
-                  phrase: $9$BTxREyN-wY2are
-            - name: ge-0/0/0.0
-              hello_interval: 5
-              dead_interval: 20
+```yaml
+junos_ospf_reference_bw: 100m
+```
+
+The reference-bandwidth that OSPF will use for cost calculations defaults to 100 megabit.  This can be overridden via the `junos_ospf_reference_bw` variable.  It is important to note that this should be a consistent value across the OSPF routing domain.
+
+```yaml
+junos_ospf:
+  import:
+    - policy-one
+    - policy-two
+  export:
+    - policy-three
+  areas:
+    - id: 0  # The area can also be written as 0.0.0.0
+      interfaces:
+        - name: lo0.0
+          passive: "True"
+        - name: st0.0
+          p2p: true  # Optional, Junos will default to interface type
+          auth:
+            - id: 1
+              phrase: "$9$BTxREyN-wY2are"
+        - name: ge-0/0/0.0
+          hello_interval: 5
+          dead_interval: 20
+```
 
 Hash containing the needed information to configure OSPF and OSPF areas.  The `import` and `export` keys expects a list of the policies to be imported or exported via OSPF.  The `passive` key allows for the interfaces address(es) to be advertised via OSPF, but not form neighbor relationships.  Setting the `passive` variable will configure the interface as passive.  The `p2p` key allows for the overriding of the network type within OSPF.  Setting `p2p` to anything will change the interface-type to p2p.  The hello and dead intervals can be override from the defaults via `hello_interval` and `dead_interval`.  The time is given in seconds.
 
+Additional information about Junos and OSPF can be found in the [OSPF Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-ospf.html).
+
 #### BGP
 
-    junos_bgp_groups:
-      - name: eBGP
-        type: external
-        local_asn: 65000
-        export_poilcy: advertise-my-prefixes
-        neighbors:
-          - address: 192.168.129.11
-            asn: 65100
+```yaml
+junos_bgp_groups:
+  - name: eBGP
+    type: external
+    local_asn: 65000
+    export_poilcy: advertise-my-prefixes
+    neighbors:
+      - address: 192.168.129.11
+        asn: 65100
+```
 
 Hash containing the needed bits for BGP group(s) configuration.  Be sure to set the `router_id` in the `junos_routing_options` hash when setting up BGP.
 
 #### Policy Options
 
-    junos_policy_options:
-      communities:
-        - name: internap-secondary
-          members: "[65025:14743]"
-      policies:
-        - name: advertise-my-prefixes
-          action: reject
-          as_path_prepend: 65000 65000 65000
-          terms:
-            - name: prefix-1
-              protocol: direct
-              route_filter: 192.168.2.0/24
-              action: accept
+```yaml
+junos_policy_options:
+  communities:
+    - name: internap-secondary
+      members: "[65025:14743]"
+  policies:
+    - name: advertise-my-prefixes
+      action: reject
+      as_path_prepend: 65000 65000 65000
+      terms:
+        - name: prefix-1
+          protocol: direct
+          route_filter: 192.168.2.0/24
+          action: accept
+```
 
 ## Vagrant Deploy
 

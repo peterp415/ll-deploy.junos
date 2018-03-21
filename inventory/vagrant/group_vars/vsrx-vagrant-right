@@ -76,7 +76,7 @@ junos_policy_options:
       terms:
         - name: 10
           protocol: direct
-          route_filter: 172.16.0.0/16 orlonger
+          route_filter: 172.16.200.0/24 orlonger
           action: accept
     - name: advertise-trust
       action: reject
@@ -99,7 +99,7 @@ junos_ospf:
           p2p: "True"
           auth:
             - id: 1
-              phrase: $9$BTxREyN-wY2are
+              phrase: "$9$BTxREyN-wY2are"
         - name: ge-0/0/1
           passive: "True"
 
