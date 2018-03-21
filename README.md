@@ -135,6 +135,8 @@ junos_bgp_groups:
 
 Hash containing the needed bits for BGP group(s) configuration.  Be sure to set the `router_id` in the `junos_routing_options` hash when setting up BGP.
 
+Additional information about Junos and BGP can be found in the [BGP Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-routing-bgp.html).
+
 #### Policy Options
 
 ```yaml
