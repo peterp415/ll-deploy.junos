@@ -51,6 +51,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     middle.vm.hostname = "r1-middle.vagrant"
     middle.vm.network "private_network", ip: "172.16.100.10", virtualbox__intnet: "left-outside"  #  eth1
     middle.vm.network "private_network", ip: "172.16.200.10", virtualbox__intnet: "right-outside" #  eth2
+    middle.vm.provision "file", source: "provision/middle-provision.cfg", destination: "/cf/root/provision.cfg"
+    middle.vm.provision :host_shell do |host_shell|
+      host_shell.inline = 'vagrant ssh middle -c "/usr/sbin/cli -f /cf/root/provision.cfg"'
+    end
     middle.hostmanager.manage_guest = false  # No /etc/hosts for vagrant-hostmanager on these
   end
 

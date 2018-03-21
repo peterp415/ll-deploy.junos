@@ -83,6 +83,51 @@ routing-options {
 }
 {% endif %}
 
+{# OSPF #}
+{% if junos_ospf is defined %}
+protocols {
+  ospf {
+    reference-bandwidth {{ junos_ospf_reference_bw }};
+    {% if junos_ospf.import is defined %}
+    import [ {% for policy in junos_ospf.import %}{{ policy }} {% endfor %}];
+    {% endif %}
+    {% if junos_ospf.export is defined %}
+    export [ {% for policy in junos_ospf.export %}{{ policy }} {% endfor %}];
+    {% endif %}
+    {% for area in junos_ospf.areas %}
+    area {{ area.id }} {
+      {% for interface in area.interfaces %}
+      {% if interface.passive is defined %}
+      interface {{ interface.name }} {
+        passive;
+      }
+      {% else %}
+      interface {{ interface.name }} {
+        {% if interface.hello_interval is defined %}
+        hello-interval {{ interface.hello_interval }};
+        {% endif %}
+        {% if interface.dead_interval is defined %}
+        dead-interval {{ interface.dead_interval }};
+        {% endif %}
+        {% if interface.p2p is defined %}
+        interface-type p2p;
+        {% endif %}
+        {% if interface.auth is defined %}
+        authentication {
+          {% for item in interface.auth %}
+          md5 {{ item.id }} key "{{ item.phrase }}";
+          {% endfor %}
+        }
+        {% endif %}
+      }
+      {% endif %}
+      {% endfor %}
+    }
+    {% endfor %}
+  }
+}
+{% endif %}
+
 {# BGP #}
 {% if junos_bgp_groups is defined %}
 protocols {

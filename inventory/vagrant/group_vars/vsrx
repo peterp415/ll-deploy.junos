@@ -126,3 +126,6 @@ junos_ike_policies:
 junos_ipsec_policies:
   - name: "std"
     proposal_set: "standard"
+
+# OSPF Variables
+junos_ospf_reference_bw: 100g

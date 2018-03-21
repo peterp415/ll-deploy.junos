@@ -13,6 +13,42 @@ This is a deploy for a set of JunOS virtual SRX images that implement:
 This README is admittedly way too long.  At least the parts about setting up different
 types of virtual networks and the information about how JunOS works should be separated out.
 
+## Table of Contents
+
+- [Getting started](#Gettingstarted)
+- [Playbooks](#Playbooks)
+- [Role Variables](#RoleVariables)
+    - [Routing Variables](#RoutingVariables)
+        - [Routing Options](#RoutingOptions)
+        - [OSPF](#OSPF)
+        - [BGP](#BGP)
+- [Vagrant Deploy](#VagrantDeploy)
+    - [Virtual Box](#VirtualBox)
+        - [Vagrant SRX VM Bootstrap Configuration](#VagrantSRXVMBootstrapConfiguration)
+        - [Vagrant SRX VM Deployment](#VagrantSRXVMDeployment)
+        - [VPN Debug](#VPNDebug)
+        - [BGP Debug](#BGPDebug)
+- [KVM Deploy](#KVMDeploy)
+    - [Hypervisor Preparation](#HypervisorPreparation)
+    - [Networks](#Networks)
+        - [Single host libvirt](#Singlehostlibvirt)
+        - [Dual host cluster with bridges](#Dualhostclusterwithbridges)
+    - [SRX VM Bootstrap Configuration]()
+- [SRX Ansible Management](#SRXAnsibleManagement)
+    - [Setting up SRX For Ansible Management](#SettingupSRXForAnsibleManagement)
+- [SRX Configuration Methods](#SRXConfigurationMethods)
+    - [SRX Redundant Ethernet Configuration](#SRXRedundantEthernetConfiguration)
+    - [SRX Interfaces and zones](#SRXInterfacesandzones)
+    - [Some Debugging Notes](#SomeDebuggingNotes)
+- [Misc Notes](#MiscNotes)
+    - [Automatic VM Provisioning](#AutomaticVMProvisioning)
+    - [Vagrant SSH Configuration](#VagrantSSHConfiguration)
+    - [Using Artifactory](#UsingArtifactory)
+    - [Default vSRX Configuration](#DefaultvSRXConfiguration)
+    - [Default Vagrant vSRX Configuration](#DefaultVagrantvSRXConfiguration)
+    - [Boot Messages](#BootMessages)
+    - [Cluster Notes](#ClusterNotes)
+
 ## Getting started
 
 1. Create/activate a virtualenv for the project and install requirements:
@@ -30,50 +66,111 @@ types of virtual networks and the information about how JunOS works should be se
 
       ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true'
 
-  The `junos_commit` variable enables actually pushing configuration to the devices, otherwise
-  configurations will be generated but the commit step will be skipped.
-  You can use the usual `--check` and `--diff` flags as well.
+  The `junos_commit` variable enables actually pushing configuration to the
+  devices, otherwise configurations will be generated but the commit step will
+  be skipped.  You can use the usual `--check` and `--diff` flags as well.
 
 ## Role Variables
 
 ### Routing Variables
 
-    # Hash matching the Routing-Options stanza of the Junos config.  A
-    # `router_id` is required when using OSPF or BGP.
-    junos_routing_options:
-      router_id: 192.168.254.254 # router_id is required
-      static_routes:
-        - prefix: 192.168.1.0/24
-          next_hop: 192.168.2.1
+#### Routing Options
 
-    # Hash containing the needed bits for BGP group(s) configuration.  Be sure
-    # to set the `router_id` in the `junos_routing_options` hash when setting
-    # up BGP.
-    junos_bgp_groups:
-      - name: eBGP
-        type: external
-        local_asn: 65000
-        export_poilcy: advertise-my-prefixes
-        neighbors:
-          - address: 192.168.129.11
-            asn: 65100
+```yaml
+junos_routing_options:
+  router_id: 192.168.254.254 # router_id is required
+  static_routes:
+    - prefix: 192.168.1.0/24
+      next_hop: 192.168.2.1
+```
 
-    # Hash containing the needed bits to create policies.
-    junos_policy_options:
-      communities:
-        - name: internap-secondary
-          members: "[65025:14743]"
-      policies:
-        - name: advertise-my-prefixes
-          action: reject
-          as_path_prepend: 65000 65000 65000
-          terms:
-            - name: prefix-1
-              protocol: direct
-              route_filter: 192.168.2.0/24
-              action: accept
+Hash matching the Routing-Options stanza of the Junos config.  A `router_id` is
+required when using OSPF or BGP.
 
-## Vagrant deploy - VirtualBox
+#### OSPF
+
+```yaml
+junos_ospf_reference_bw: 100m
+```
+
+The reference-bandwidth that OSPF will use for cost calculations defaults to 100
+megabit.  This can be overridden via the `junos_ospf_reference_bw` variable.  It
+is important to note that this should be a consistent value across the OSPF
+routing domain.
+
+```yaml
+junos_ospf:
+  import:
+    - policy-one
+    - policy-two
+  export:
+    - policy-three
+  areas:
+    - id: 0  # The area can also be written as 0.0.0.0
+      interfaces:
+        - name: lo0.0
+          passive: "True"
+        - name: st0.0
+          p2p: true  # Optional, Junos will default to interface type
+          auth:
+            - id: 1
+              phrase: "$9$BTxREyN-wY2are"
+        - name: ge-0/0/0.0
+          hello_interval: 5
+          dead_interval: 20
+```
+
+Hash containing the needed information to configure OSPF and OSPF areas.  The
+`import` and `export` keys expects a list of the policies to be imported or
+exported via OSPF.  The `passive` key allows for the interfaces address(es) to
+be advertised via OSPF, but not form neighbor relationships.  Setting the
+`passive` variable will configure the interface as passive.  The `p2p` key
+allows for the overriding of the network type within OSPF.  Setting `p2p` to
+anything will change the interface-type to p2p.  The hello and dead intervals
+can be override from the defaults via `hello_interval` and `dead_interval`.  The
+time is given in seconds.
+
+Additional information about Junos and OSPF can be found in the [OSPF Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-ospf.html).
+
+#### BGP
+
+```yaml
+junos_bgp_groups:
+  - name: eBGP
+    type: external
+    local_asn: 65000
+    export_poilcy: advertise-my-prefixes
+    neighbors:
+      - address: 192.168.129.11
+        asn: 65100
+```
+
+Hash containing the needed bits for BGP group(s) configuration.  Be sure to set
+the `router_id` in the `junos_routing_options` hash when setting up BGP.
+
+Additional information about Junos and BGP can be found in the [BGP Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-routing-bgp.html).
+
+#### Policy Options
+
+```yaml
+junos_policy_options:
+  communities:
+    - name: internap-secondary
+      members: "[65025:14743]"
+  policies:
+    - name: advertise-my-prefixes
+      action: reject
+      as_path_prepend: 65000 65000 65000
+      terms:
+        - name: prefix-1
+          protocol: direct
+          route_filter: 192.168.2.0/24
+          action: accept
+```
+
+## Vagrant Deploy
+
+### VirtualBox
 
 The VirtualBox deploy uses a Vagrant box from Juniper that requires the `vagrant-junos`
 and `vagrant-host-shell` plugins.  You will need to install these, for example:
@@ -274,7 +371,7 @@ Would be good to also have the option of trying an lo interface for the VPN endp
 This is useful if for example the two SRX have separate reth interfaces for multiple upstreams.
 See https://forums.juniper.net/t5/SRX-Services-Gateway/IPSec-VPN-using-Reth-Interfaces-srx240/td-p/224877
 
-### KVM Hypervisor Preparation
+### Hypervisor Preparation
 
 - Enable nested virtualization:
 
@@ -296,7 +393,9 @@ See https://forums.juniper.net/t5/SRX-Services-Gateway/IPSec-VPN-using-Reth-Inte
 
         options kvm-intel enable_apicv=n
 
-### KVM Hypervisor Networks (single-host libvirt networks)
+### Networks
+
+#### Single host libvirt
 
 Create libvirt networks (host-only, for single-host testing only):
 
@@ -328,7 +427,7 @@ Manage the networks:
     virsh net-define /path/to/<net-name>.xml
     virsh net-start <net-name>
 
-### KVM Hypervisor Networks (2-host cluster with bridges)
+#### Dual host cluster with bridges
 
 Create host bridges:
 
@@ -379,7 +478,7 @@ In `/etc/network/interfaces`:
       bridge_ports em2.106
 
 
-### KVM SRX VM Bootstrap Configuration
+### SRX VM Bootstrap Configuration
 
 Create VMs with virt-install:
 

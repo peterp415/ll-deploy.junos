@@ -14,3 +14,6 @@ junos_location:
 
 junos_autoupdate_url: https://ae1.juniper.net/junos/key_retrieval
 junos_ssh_root_login: "False"
+
+# OSPF
+junos_ospf_reference_bw: 100m
