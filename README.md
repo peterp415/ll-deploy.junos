@@ -66,9 +66,9 @@ types of virtual networks and the information about how JunOS works should be se
 
       ansible-playbook -i inventory/vagrant/inventory deploy.yml -e 'junos_commit=true'
 
-  The `junos_commit` variable enables actually pushing configuration to the devices, otherwise
-  configurations will be generated but the commit step will be skipped.
-  You can use the usual `--check` and `--diff` flags as well.
+  The `junos_commit` variable enables actually pushing configuration to the
+  devices, otherwise configurations will be generated but the commit step will
+  be skipped.  You can use the usual `--check` and `--diff` flags as well.
 
 ## Role Variables
 
@@ -84,7 +84,8 @@ junos_routing_options:
       next_hop: 192.168.2.1
 ```
 
-Hash matching the Routing-Options stanza of the Junos config.  A `router_id` is required when using OSPF or BGP.
+Hash matching the Routing-Options stanza of the Junos config.  A `router_id` is
+required when using OSPF or BGP.
 
 #### OSPF
 
@@ -92,7 +93,10 @@ Hash matching the Routing-Options stanza of the Junos config.  A `router_id` is 
 junos_ospf_reference_bw: 100m
 ```
 
-The reference-bandwidth that OSPF will use for cost calculations defaults to 100 megabit.  This can be overridden via the `junos_ospf_reference_bw` variable.  It is important to note that this should be a consistent value across the OSPF routing domain.
+The reference-bandwidth that OSPF will use for cost calculations defaults to 100
+megabit.  This can be overridden via the `junos_ospf_reference_bw` variable.  It
+is important to note that this should be a consistent value across the OSPF
+routing domain.
 
 ```yaml
 junos_ospf:
@@ -116,7 +120,15 @@ junos_ospf:
           dead_interval: 20
 ```
 
-Hash containing the needed information to configure OSPF and OSPF areas.  The `import` and `export` keys expects a list of the policies to be imported or exported via OSPF.  The `passive` key allows for the interfaces address(es) to be advertised via OSPF, but not form neighbor relationships.  Setting the `passive` variable will configure the interface as passive.  The `p2p` key allows for the overriding of the network type within OSPF.  Setting `p2p` to anything will change the interface-type to p2p.  The hello and dead intervals can be override from the defaults via `hello_interval` and `dead_interval`.  The time is given in seconds.
+Hash containing the needed information to configure OSPF and OSPF areas.  The
+`import` and `export` keys expects a list of the policies to be imported or
+exported via OSPF.  The `passive` key allows for the interfaces address(es) to
+be advertised via OSPF, but not form neighbor relationships.  Setting the
+`passive` variable will configure the interface as passive.  The `p2p` key
+allows for the overriding of the network type within OSPF.  Setting `p2p` to
+anything will change the interface-type to p2p.  The hello and dead intervals
+can be override from the defaults via `hello_interval` and `dead_interval`.  The
+time is given in seconds.
 
 Additional information about Junos and OSPF can be found in the [OSPF Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-ospf.html).
 
@@ -133,7 +145,8 @@ junos_bgp_groups:
         asn: 65100
 ```
 
-Hash containing the needed bits for BGP group(s) configuration.  Be sure to set the `router_id` in the `junos_routing_options` hash when setting up BGP.
+Hash containing the needed bits for BGP group(s) configuration.  Be sure to set
+the `router_id` in the `junos_routing_options` hash when setting up BGP.
 
 Additional information about Junos and BGP can be found in the [BGP Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-routing-bgp.html).
 
