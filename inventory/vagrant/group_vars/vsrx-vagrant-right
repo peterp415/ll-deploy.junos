@@ -100,6 +100,10 @@ junos_ospf:
           auth:
             - id: 1
               phrase: "$9$BTxREyN-wY2are"
+          bfd:
+            minimum_interval: 500
+            multiplier: 4
+            full_neighbors: false
         - name: ge-0/0/1
           passive: "True"
 

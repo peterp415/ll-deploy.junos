@@ -115,6 +115,10 @@ junos_ospf:
           auth:
             - id: 1
               phrase: "$9$BTxREyN-wY2are"
+          bfd:
+            minimum_interval: 500 # time in miliseconds
+            multiplier: 4
+            full_neighbors: true
         - name: ge-0/0/0.0
           hello_interval: 5
           dead_interval: 20
@@ -128,7 +132,10 @@ be advertised via OSPF, but not form neighbor relationships.  Setting the
 allows for the overriding of the network type within OSPF.  Setting `p2p` to
 anything will change the interface-type to p2p.  The hello and dead intervals
 can be override from the defaults via `hello_interval` and `dead_interval`.  The
-time is given in seconds.
+time is given in seconds.  Bidirectional Forwarding Detection can be run on an
+interface basis by setting the `minimum_interval` and `multiplier`.  The
+`minimum_interval` is set in miliseconds.  There is additional information about
+BFD and Junos in the feature guide, linked below.
 
 Additional information about Junos and OSPF can be found in the [OSPF Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-ospf.html).
 

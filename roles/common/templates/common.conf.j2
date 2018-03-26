@@ -119,6 +119,15 @@ protocols {
           {% endfor %}
         }
         {% endif %}
+        {% if interface.bfd is defined %}
+        bfd-liveness-detection {
+          minimum-interval {{ interface.bfd.minimum_interval }};
+          multiplier {{ interface.bfd.multiplier }};
+          {% if interface.bfd.full_neighbors | default(false) %}
+          full-neighbors-only;
+          {% endif %}
+        }
+        {% endif %}
       }
       {% endif %}
       {% endfor %}
