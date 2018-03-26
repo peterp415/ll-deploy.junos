@@ -70,6 +70,9 @@ junos_bgp_groups:
     neighbors:
       - address: 172.16.100.10
         asn: 65000
+        bfd:
+          minimum_interval: 500
+          multiplier: 4
 
 junos_policy_options:
   communities:

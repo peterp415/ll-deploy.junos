@@ -150,10 +150,17 @@ junos_bgp_groups:
     neighbors:
       - address: 192.168.129.11
         asn: 65100
+        bfd:
+          minimum_interval: 5000 # time in miliseconds
+          multiplier: 4
 ```
 
 Hash containing the needed bits for BGP group(s) configuration.  Be sure to set
 the `router_id` in the `junos_routing_options` hash when setting up BGP.
+Bidirectional forwarding detection can be set per neighbor by using the `bfd`
+key and setting the `minimum_interval` in miliseconds and the `multiplier`.
+Additional information about BFD and BGP can be found in the feature guide,
+linked below.
 
 Additional information about Junos and BGP can be found in the [BGP Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-routing-bgp.html).
 
