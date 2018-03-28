@@ -119,6 +119,15 @@ protocols {
           {% endfor %}
         }
         {% endif %}
+        {% if interface.bfd is defined %}
+        bfd-liveness-detection {
+          minimum-interval {{ interface.bfd.minimum_interval }};
+          multiplier {{ interface.bfd.multiplier }};
+          {% if interface.bfd.full_neighbors | default(false) %}
+          full-neighbors-only;
+          {% endif %}
+        }
+        {% endif %}
       }
       {% endif %}
       {% endfor %}
@@ -142,6 +151,12 @@ protocols {
             {% for neighbor in group.neighbors %}
             neighbor {{ neighbor.address }} {
                 peer-as {{ neighbor.asn }};
+                {% if neighbor.bfd is defined %}
+                bfd-liveness-detection {
+                  minimum-interval {{ neighbor.bfd.minimum_interval }};
+                  multiplier {{ neighbor.bfd.multiplier }};
+                }
+                {% endif %}
             }
             {% endfor %}
         }
