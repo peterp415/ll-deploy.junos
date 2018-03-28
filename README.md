@@ -134,10 +134,16 @@ anything will change the interface-type to p2p.  The hello and dead intervals
 can be override from the defaults via `hello_interval` and `dead_interval`.  The
 time is given in seconds.  Bidirectional Forwarding Detection can be run on an
 interface basis by setting the `minimum_interval` and `multiplier`.  The
-`minimum_interval` is set in miliseconds.  There is additional information about
+`minimum_interval` is set in miliseconds.  The `full_neighbors` option when set
+to True only creates BFD sessions with full OSPF neighbors.  The use of
+`full_neighbors` would be less overhead in managing BFD sessions to 2-Way
+neighbors.  Please consult the [feature guide][ospf-feature-guide] for best
+practices in setting `minimum_interval`.  There is additional information about
 BFD and Junos in the feature guide, linked below.
 
-Additional information about Junos and OSPF can be found in the [OSPF Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-ospf.html).
+Additional information about Junos and OSPF can be found in the [OSPF Feature Guide][ospf-feature-guide].
+
+[ospf-feature-guide]: https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-ospf.html
 
 #### BGP
 
@@ -159,10 +165,13 @@ Hash containing the needed bits for BGP group(s) configuration.  Be sure to set
 the `router_id` in the `junos_routing_options` hash when setting up BGP.
 Bidirectional forwarding detection can be set per neighbor by using the `bfd`
 key and setting the `minimum_interval` in miliseconds and the `multiplier`.
-Additional information about BFD and BGP can be found in the feature guide,
-linked below.
+Please reference the feature guide for guidelines in selecting
+`minimum_interval`.  Additional information about BFD and BGP can be found in
+the [feature guide][bgp-feature-guide], linked below.
 
-Additional information about Junos and BGP can be found in the [BGP Feature Guide](https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-routing-bgp.html).
+Additional information about Junos and BGP can be found in the [BGP Feature Guide][bgp-feature-guide].
+
+[bgp-feature-guide]: https://www.juniper.net/documentation/en_US/junos/information-products/pathway-pages/config-guide-routing/config-guide-routing-bgp.html
 
 #### Policy Options
 
