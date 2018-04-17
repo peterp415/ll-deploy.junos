@@ -1,7 +1,0 @@
----
-# Generate the common part of the configurations
-- name: Building common configuration
-  template:
-    src: common.conf.j2
-    dest: "{{ junos_build_dir }}/common.conf.part"
-  check_mode: no  # run even in check mode, so we can see

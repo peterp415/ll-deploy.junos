@@ -25,7 +25,7 @@
   connection: local
   gather_facts: "no"
   roles:
-    - common  # Common configuration
+    - junos-common  # Common configuration
     - srx     # SRX-specifics
 
 # Assemble parts and apply to devices
