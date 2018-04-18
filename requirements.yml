@@ -1,4 +1,8 @@
 ---
+- name: junos-common
+  src: https://github.int.llabs.io/ig/roles.junos-common.git
+  version: "v1.0.0"
+  scm: git
 
 # This gets the same thing as
 #   ansible-galaxy install -p ./shared-roles Juniper.junos
