@@ -1,7 +1,0 @@
----
-# Generate the SRX-specific part of the configurations
-- name: Building SRX-specific configuration
-  template:
-    src: srx.conf.j2
-    dest: "{{ junos_build_dir }}/srx.conf.part"
-  check_mode: no  # run even in check mode, so we can see

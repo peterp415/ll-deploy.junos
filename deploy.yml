@@ -26,7 +26,7 @@
   gather_facts: "no"
   roles:
     - junos-common  # Common configuration
-    - srx     # SRX-specifics
+    - junos-srx     # SRX-specifics
 
 # Assemble parts and apply to devices
 # The first task merges all the configuration fragments into one file.
