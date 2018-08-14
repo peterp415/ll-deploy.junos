@@ -8,8 +8,3 @@
   src: https://github.int.llabs.io/ig/roles.junos-srx.git
   version: "v1.0.0"
   scm: git
-
-# This gets the same thing as
-#   ansible-galaxy install -p ./shared-roles Juniper.junos
-- name: Juniper.junos
-  version: "2.0.2"
