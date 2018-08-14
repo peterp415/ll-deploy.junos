@@ -1,7 +1,7 @@
 ---
 - name: junos-common
   src: https://github.int.llabs.io/ig/roles.junos-common.git
-  version: "9f6a39747848ea7d785cc496cc4bba1d42fc0c69"
+  version: "d06d45cdf7fd92d1306ad00062c97cbcfee7113d"
   scm: git
 
 - name: junos-srx
