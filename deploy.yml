@@ -9,24 +9,37 @@
   gather_facts: "no"
   tasks:
     - name: remove host build temp directory
-      file: path={{ junos_build_dir }} state=absent
+      file:
+        path: "{{ junos_build_dir }}"
+        state: absent
       check_mode: "no"  # run even in check mode, so we can see diffs
     - name: create host build temp directory
-      file: path={{ junos_build_dir }} state=directory
+      file:
+        path: "{{ junos_build_dir }}"
+        state: "directory"
       check_mode: "no"  # run even in check mode, so we can see diffs
     - name: remove host build temp directory
-      file: path={{ junos_conf_file }} state=absent
+      file:
+        path: "{{ junos_conf_file }}"
+        state: absent
       check_mode: "no"  # run even in check mode, so we can see diffs
 
 # Template out configuration fragments, for common parts and device-specific
 # parts
-- name: Create SRX configuration fragments
-  hosts: vsrx
+- name: Create common configuration fragments
+  hosts: all
   connection: local
   gather_facts: "no"
   roles:
     - junos-common  # Common configuration
-    - junos-srx     # SRX-specifics
+
+## Template out configuration fragments, for SRX
+- name: Create common configuration fragments
+  hosts: srx
+  connection: local
+  gather_facts: "no"
+  roles:
+    - junos-srx  # Common configuration
 
 # Assemble parts and apply to devices
 # The first task merges all the configuration fragments into one file.
@@ -34,25 +47,24 @@
 # is triggered to push the configuration onto the device.
 - name: Assemble and commit configuration
   hosts: all
+  connection: local
   gather_facts: "no"
-  roles:
-    - Juniper.junos
+  handlers:
+    - name: Commit configuration via NETCONF
+      junos_config:
+        src: "{{ junos_conf_file }}"
+        update: override
+        provider: "{{ netconf_auth_creds }}"
+      # Use -e 'junos_commit=true' to run the commit
+      when: junos_commit is defined
   tasks:
     - name: assembling configurations
-      assemble: src={{ junos_build_dir }} dest={{ junos_conf_file }}
+      assemble:
+        src: "{{ junos_build_dir }}"
+        dest: "{{ junos_conf_file }}"
       notify:
         - Commit configuration via NETCONF
         # - Pushing config ... please wait
-      delegate_to: localhost
-      check_mode: "no"  # run even in check mode, so we can see diffs
-
-  handlers:
-
-    - name: Commit configuration via NETCONF
-      junos_config:
-        provider: "{{ netconf }}"
-        src: "{{ junos_conf_file }}"
-        update: override
-      delegate_to: localhost
-      # Use -e 'junos_commit=true' to run the commit
-      when: junos_commit is defined
+      # run even in check mode, so we can see diffs- name: Assemble and commit
+      # configuration
+      check_mode: "no"

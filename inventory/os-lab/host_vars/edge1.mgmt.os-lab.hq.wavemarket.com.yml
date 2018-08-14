@@ -1,0 +1,14 @@
+---
+junos_config_hostname: edge1
+junos_interfaces:
+  - name: fxp0
+    units:
+      0:
+        address: 10.38.32.17/25
+junos_routing_options:
+  global:  # Global routing instance
+    - router_id: 1.1.1.1
+      static_routes:
+        - prefix: 10.38.0.0/16
+          next_hop: 10.38.32.1
+

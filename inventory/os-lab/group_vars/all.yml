@@ -1,0 +1,17 @@
+---
+netconf_auth_creds:
+  timeout: 30
+junos_build_root: ./build_dir
+junos_build_dir: "{{ junos_build_root }}/{{ inventory_hostname }}/tmp"
+junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
+junos_config_user: "{{ ansible_ssh_user  }}"
+
+junos_config_domain: mgmt.os-lab.hq.wavemarket.com
+junos_ssh_root_login: "True"
+junos_root_auth:
+  encrypted_password: "$5$vvjrjJ48$Hn6nQba9MI.iY0w922o3Ba8//pF2BuUsjNnqk/Qlua1"
+junos_users:
+  - name: david.selders
+    uid: 1001
+    class: super-user
+    ssh_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDRqoUoOtQ7k9HIETWLtgnbZpciXcu/MLLLAnTIkgW6lWKdsd1yMp8r1pM0ykRZpAaSup39HxTzK+7U4x49RgcCUn2/M4EYV33jzkp/m6Jb6dqXQtPtMNWvmvsBZf8PhZsr/jMIAQ6tX6m+9yrVkvRWQsZSSaAsxoI/LJUWH7GX4TmJoUcMD2ZQWLJWIwIfv2DNv8x6lxB7AZGDQfD+7+swWoFxnfsu/164QJiUWQyub2tRQUEskNsebwPiPzigO4LqCTD+A8POz0BzM5i+bJ1yU5Obr0h1CyBMpThCJAso7MKBQHB5ZYd2A/0ZJUBB2DVfsp360ScRYyMv8prsp9WYQqKRTqoRegOFucpBz6XdjrvzaiS5uL2jpyzod8PAmdXlsGCjHvKyWGMmv0YQjrcZ5qTlBGCKshDKnFNKjaeUXULpgVv9XQ85nlZy1+NOcWoelYopHU+/rRiH3AVVjxshoxD6zh9aQMzSPU0Gs5PaL+lcaHMD4FK8va9zamZ0WP9uaaT8uM6i/+LsP7FMZlLyzfaxGztJPMZznusEX6Af4Iwnub/i46hYPeXXbEA0O85Xd6OMNDr5CpKDB1QkxKsCXWGxuHcoHFMzWOMoKuncNyjULTadUQh2qreC1sgkVUESdpe+nRiVBlpTYitWjF5zz2eubImkJaFc0inCAzCDJw== david.selders@locationlabs.com"
