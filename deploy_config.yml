@@ -8,3 +8,4 @@
         src: "{{ junos_config_file }}"
         src_format: text
         update: override
+      when: junos_commit is defined
