@@ -1,0 +1,10 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: "no"
+  tasks:
+    - name: Commit via Netconf
+      junos_config:
+        src: "{{ junos_config_file }}"
+        src_format: text
+        update: override

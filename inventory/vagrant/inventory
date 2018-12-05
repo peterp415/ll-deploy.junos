@@ -13,8 +13,8 @@ ansible_ssh_user=vagrant
 
 [vsrx-vagrant-left]
 # Vagrant srx1-left
-srx1-left junos_config_hostname=srx1-left.vagrant
+srx1-left.vagrant junos_config_hostname=srx1-left.vagrant
 
 [vsrx-vagrant-right]
 # Vagrant srx1-right
-srx1-right junos_config_hostname=srx1-right.vagrant
+srx1-right.vagrant junos_config_hostname=srx1-right.vagrant

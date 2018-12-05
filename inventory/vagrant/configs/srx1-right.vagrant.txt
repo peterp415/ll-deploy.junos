@@ -1,0 +1,334 @@
+version 12.1X47-D15.4;
+system {
+    host-name srx1-right.vagrant;
+    time-zone PST;
+    root-authentication {
+        encrypted-password "$5$LfdyRnV4$kZdd6xVMBVbRnf6kz0mHfP7Pc46ppQJBGgMpYmFBdbD"; ## SECRET-DATA
+        ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"; ## SECRET-DATA
+    }
+    login {
+        user vagrant {
+            uid 2000;
+            class super-user;
+            authentication {
+                ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"; ## SECRET-DATA
+            }
+        }
+    }
+    services {
+        ssh {
+            root-login allow;
+        }
+        netconf {
+            ssh;
+        }
+    }
+    syslog {
+        user * {
+            any emergency;
+        }
+        file messages {
+            any any;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+    license {
+        autoupdate {
+            url https://ae1.juniper.net/junos/key_retrieval;
+        }
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family inet {
+                dhcp;
+            }
+        }
+    }
+    ge-0/0/1 {
+        unit 0 {
+            family inet {
+                address 172.16.20.10/24;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet {
+                address 172.16.200.20/24;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 169.254.254.2/32;
+            }
+        }
+    }
+    st0 {
+        unit 0 {
+            family inet {
+                address 10.30.1.2/30;
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 172.16.0.0/24 next-hop 172.16.200.10;
+    }
+    router-id 169.254.254.2;
+}
+protocols {
+    bgp {
+        group external {
+            type external;
+            export advertise-external;
+            local-as 65200;
+            neighbor 172.16.200.10 {
+                peer-as 65000;
+                bfd-liveness-detection {
+                    minimum-interval 500;
+                    multiplier 4;
+                }
+            }
+        }
+    }
+    ospf {
+        reference-bandwidth 100g;
+        area 0.0.0.0 {
+            interface lo0.0 {
+                passive;
+            }
+            interface st0.0 {
+                interface-type p2p;
+                hello-interval 5;
+                dead-interval 20;
+                authentication {
+                    md5 1 key "$9$BTxREyN-wY2are"; ## SECRET-DATA
+                }
+                bfd-liveness-detection {
+                    minimum-interval 500;
+                    multiplier 4;
+                }
+            }
+            interface ge-0/0/1.0 {
+                passive;
+            }
+        }
+    }
+}
+policy-options {
+    policy-statement advertise-external {
+        term 10 {
+            from {
+                protocol direct;
+                route-filter 172.16.200.0/24 orlonger;
+            }
+            then accept;
+        }
+        then reject;
+    }
+    policy-statement advertise-trust {
+        term 10 {
+            from {
+                protocol direct;
+                route-filter 172.16.20.0/24 exact;
+            }
+            then accept;
+        }
+        then reject;
+    }
+}
+security {
+    ike {
+        proposal ike-proposal-vpntest1 {
+            authentication-method pre-shared-keys;
+            dh-group group2;
+            authentication-algorithm sha1;
+            encryption-algorithm aes-128-cbc;
+        }
+        policy preshared {
+            mode main;
+            proposal-set standard;
+            pre-shared-key ascii-text "$9$4QZi.FnC1RSCtBESr8Ls24Zi.3nC"; ## SECRET-DATA
+        }
+        policy ike-policy-vpntest1 {
+            mode main;
+            proposals ike-proposal-vpntest1;
+            pre-shared-key ascii-text "$9$n8E.C0IlK8Vwg8XdsgojiQFnC0IeK8"; ## SECRET-DATA
+        }
+        gateway srx1-left {
+            ike-policy ike-policy-vpntest1;
+            address 172.16.100.20;
+            external-interface ge-0/0/2.0;
+        }
+    }
+    ipsec {
+        policy std {
+            proposal-set standard;
+        }
+        vpn vsrx-link {
+            bind-interface st0.0;
+            ike {
+                gateway srx1-left;
+                ipsec-policy std;
+            }
+            establish-tunnels immediately;
+        }
+    }
+    flow {
+        tcp-mss {
+            ipsec-vpn {
+                mss 1420;
+            }
+        }
+    }
+    screen {
+        ids-option untrust-screen {
+            icmp {
+                ping-death;
+            }
+            ip {
+                source-route-option;
+                tear-drop;
+            }
+            tcp {
+                syn-flood {
+                    alarm-threshold 1024;
+                    attack-threshold 200;
+                    source-threshold 1024;
+                    destination-threshold 2048;
+                    queue-size 2000; ## Warning: 'queue-size' is deprecated
+                    timeout 20;
+                }
+                land;
+            }
+        }
+    }
+    policies {
+        from-zone trust to-zone trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone trust to-zone untrust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone untrust to-zone trust {
+            policy default-deny {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    deny;
+                }
+            }
+        }
+        from-zone trust to-zone vpn {
+            policy any {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone vpn to-zone trust {
+            policy any {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        functional-zone management {
+            interfaces {
+                ge-0/0/0.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            all;
+                        }
+                        protocols {
+                            all;
+                        }
+                    }
+                }
+            }
+        }
+        security-zone trust {
+            tcp-rst;
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+            interfaces {
+                ge-0/0/1.0;
+            }
+        }
+        security-zone untrust {
+            screen untrust-screen;
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+            interfaces {
+                lo0.0;
+                ge-0/0/2.0;
+            }
+        }
+        security-zone vpn {
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+            interfaces {
+                st0.0;
+            }
+        }
+    }
+}
