@@ -10,8 +10,10 @@ configurations are expected to be stored in:
 The deploy requires that the text file be in the culry braced format at this
 time.  The usage is pretty simple, push to all devices showing the diff:
 
-`ansible-playbook -i inventory/vagrant/inventory deploy_config.yml -e
+`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/vagrant/inventory deploy_config.yml -e
 'junos_commit=true'-D`
+
+---
 
 This is a deploy for a set of JunOS virtual SRX images that implement:
 
