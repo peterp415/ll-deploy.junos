@@ -1,4 +1,4 @@
-ansible==2.6.1
+ansible==2.6.10
 ncclient==0.6.3
 junos-eznc==2.1.7
 # srx-provision uses pexpect
