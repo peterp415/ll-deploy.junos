@@ -1,2 +1,2 @@
 ---
-junos_config_file: "inventory/os-lab/configs/{{ inventory_hostname }}.txt"
+environment_name: os-lab

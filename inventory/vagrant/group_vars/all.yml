@@ -1,2 +1,2 @@
 ---
-junos_config_file: "inventory/vagrant/configs/{{ inventory_hostname }}.txt"
+environment_name: vagrant

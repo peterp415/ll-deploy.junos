@@ -1,11 +1,11 @@
 ---
 - hosts: all
   connection: local
-  gather_facts: "no"
+  gather_facts: no
   tasks:
     - name: Commit via Netconf
       junos_config:
-        src: "{{ junos_config_file }}"
+        src: "files/{{ environment_name }}/configs/{{ inventory_hostname }}.txt"
         src_format: text
         update: override
       when: junos_commit is defined

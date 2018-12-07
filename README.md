@@ -5,7 +5,7 @@ an additional playbook has been added.  The `deploy_config.yml` will push the
 full text configuration to the Junos device and commit the changes.  The
 configurations are expected to be stored in:
 
-`inventory/{kvm,vagrant}/configs/{{ inventory_hostname }}.txt`
+`files/{environment}/configs/{{ inventory_hostname }}.txt`
 
 The deploy requires that the text file be in the culry braced format at this
 time.  The usage is pretty simple, push to all devices showing the diff:
