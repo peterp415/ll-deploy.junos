@@ -1,5 +1,25 @@
 # JunOS Deploy
 
+As a intermediary solution to get the Junos configurations into version control
+an additional playbook has been added.  The `deploy_config.yml` will push the
+full text configuration to the Junos device and commit the changes.  The
+configurations are expected to be stored in:
+
+`files/{environment}/configs/{{ inventory_hostname }}.txt`
+
+The deploy requires that the text file be in the culry braced format at this
+time.  The usage is pretty simple, push to all devices showing the diff:
+
+`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/vagrant/inventory deploy_config.yml -e
+'junos_commit=true'-D`
+
+**NOTE:** the `ANSIBLE_NETCONF_SSH_CONFIG` option was tested as configured in
+ansible.cfg and as an `environment` var in the `deploy_config` playbook.  At the
+time of this writing the environment variable set within the shell was the only
+method that worked.
+
+---
+
 This is a deploy for a set of JunOS virtual SRX images that implement:
 
   - Basic host configuration

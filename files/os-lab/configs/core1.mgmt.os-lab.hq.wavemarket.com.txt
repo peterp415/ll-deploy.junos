@@ -1,0 +1,893 @@
+version 15.1X49-D130.6;
+groups {
+    node0 {
+        system {
+            host-name core1-0;
+            backup-router 10.38.32.1 destination 10.38.0.0/16;
+            syslog {
+                source-address 10.38.32.15;
+            }
+        }
+        interfaces {
+            fxp0 {
+                unit 0 {
+                    family inet {
+                        address 10.38.32.15/25;
+                    }
+                }
+            }
+        }
+    }
+    node1 {
+        system {
+            host-name core1-1;
+            backup-router 10.38.32.1 destination 10.38.0.0/16;
+            syslog {
+                source-address 10.38.32.16;
+            }
+        }
+        interfaces {
+            fxp0 {
+                unit 0 {
+                    family inet {
+                        address 10.38.32.16/25;
+                    }
+                }
+            }
+        }
+    }
+}
+apply-groups "${node}";
+system {
+    time-zone UTC;
+    root-authentication {
+        encrypted-password "$5$R.KTswIp$2cw8E5mf81Ljq3F46Hf30jzpKOJdXQquS5ThfUTsAH3"; ## SECRET-DATA
+    }
+    name-server {
+        8.8.8.8;
+        8.8.4.4;
+    }
+    login {
+        class RANCID {
+            permissions [ access admin firewall flow-tap interface network routing secret security snmp storage system trace view view-configuration ];
+        }
+        user david.selders {
+            uid 1001;
+            class super-user;
+            authentication {
+                ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDRqoUoOtQ7k9HIETWLtgnbZpciXcu/MLLLAnTIkgW6lWKdsd1yMp8r1pM0ykRZpAaSup39HxTzK+7U4x49RgcCUn2/M4EYV33jzkp/m6Jb6dqXQtPtMNWvmvsBZf8PhZsr/jMIAQ6tX6m+9yrVkvRWQsZSSaAsxoI/LJUWH7GX4TmJoUcMD2ZQWLJWIwIfv2DNv8x6lxB7AZGDQfD+7+swWoFxnfsu/164QJiUWQyub2tRQUEskNsebwPiPzigO4LqCTD+A8POz0BzM5i+bJ1yU5Obr0h1CyBMpThCJAso7MKBQHB5ZYd2A/0ZJUBB2DVfsp360ScRYyMv8prsp9WYQqKRTqoRegOFucpBz6XdjrvzaiS5uL2jpyzod8PAmdXlsGCjHvKyWGMmv0YQjrcZ5qTlBGCKshDKnFNKjaeUXULpgVv9XQ85nlZy1+NOcWoelYopHU+/rRiH3AVVjxshoxD6zh9aQMzSPU0Gs5PaL+lcaHMD4FK8va9zamZ0WP9uaaT8uM6i/+LsP7FMZlLyzfaxGztJPMZznusEX6Af4Iwnub/i46hYPeXXbEA0O85Xd6OMNDr5CpKDB1QkxKsCXWGxuHcoHFMzWOMoKuncNyjULTadUQh2qreC1sgkVUESdpe+nRiVBlpTYitWjF5zz2eubImkJaFc0inCAzCDJw== david.selders@locationlabs.com"; ## SECRET-DATA
+            }
+        }
+        user rancid {
+            full-name RANCID;
+            uid 2001;
+            class RANCID;
+            authentication {
+                ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDoqCebUtvf/AYgnhvu2sWjCculvumpeauTkjeZvAVn/cjX4y4BsDqs+BhaOBbDMFt2pajaGreN6Vcnxrq/fGF3aSjWbz/4PwJlk0Xawgg1yz2Qe8p8KEuE2iT1pfWFbU2tBQVR0F2VW/deVhfxVZoX3yXyA3ayZZkLhZxHr6voGf3UfIRmhnPxz/NQio/2qdwTFtMUJl381Sqc5qUCIVAhwPmwfD/If00ffMWRfRLHlG7DLwXKNhcoUEur/dv0xFVvrUXun32Zo9fV1Lnmehb2BSWOaV9q9XODV+y5fg18XTYtF7R7c/lfPgiEwSoat9m+grTLMKtVjckEiEULfRX9fFQIkEz6DezAXI07jiJCVsA+16d1MfvgTRneBv9LeE4E4iNEnnC0EEXg0C3aedtvq2Qrkw23t1HgwW8ebFceBFo4hWviFoxnh06hHsPVT5J9e5Ut7Xs4S17FHucJIocpR1VWCFir/Hmmjo/oPCY/HKDTV+/YCbtBX2jhzSkLE5S1XJRzzIgJrpt9vbWpnxbyAesAwbxKLSUnEJmItfWls0D9RgexWUehafjDzgUQnYjpw2ax2cgU5O6sn9is89ednxgBVElS5JvN5IxndG25nlHi7/hg6wvGnK7WmNHBhKB6HeR1y4aVQn1KcujIsVwZkGg4tJmtJWZ5xiA5sFWWhQ== rancid@ig-deploy"; ## SECRET-DATA
+            }
+        }
+    }
+    services {
+        ssh;
+        netconf {
+            ssh;
+        }
+    }
+    syslog {
+        archive size 100k files 3;
+        user * {
+            any emergency;
+        }
+        host 10.38.32.51 {
+            any info;
+            port 5046;
+        }
+        file messages {
+            any notice;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+    max-configurations-on-flash 5;
+    max-configuration-rollbacks 5;
+    license {
+        autoupdate {
+            url https://ae1.juniper.net/junos/key_retrieval;
+        }
+    }
+}
+chassis {
+    cluster {
+        reth-count 2;
+        redundancy-group 0 {
+            node 0 priority 254;
+            node 1 priority 1;
+        }
+        redundancy-group 1 {
+            node 0 priority 254;
+            node 1 priority 1;
+            interface-monitor {
+                ge-0/0/4 weight 255;
+                ge-0/0/5 weight 255;
+                ge-3/0/4 weight 255;
+                ge-3/0/5 weight 255;
+            }
+        }
+    }
+}
+security {
+    ike {
+        proposal ike-prop-vpn-oslab-1 {
+            authentication-method pre-shared-keys;
+            dh-group group2;
+            authentication-algorithm sha1;
+            encryption-algorithm aes-256-cbc;
+        }
+        policy ike-pol-vpn-oslab-1 {
+            mode main;
+            proposals ike-prop-vpn-oslab-1;
+            pre-shared-key ascii-text "$9$Xqf7-w24ZH.PYgjkmPzFMWL7dwjiq.PQBIVY2gDjz36Cu1eK8"; ## SECRET-DATA
+        }
+        gateway gw-vpn-oslab-1 {
+            ike-policy ike-pol-vpn-oslab-1;
+            address 66.211.110.193;
+            external-interface lo0.0;
+            local-address 8.44.176.254;
+        }
+    }
+    ipsec {
+        proposal ipsec-prop-vpn-oslab-1 {
+            protocol esp;
+            authentication-algorithm hmac-sha1-96;
+            encryption-algorithm aes-256-cbc;
+            lifetime-seconds 3600;
+        }
+        policy ipsec-pol-vpn-oslab-1 {
+            proposals ipsec-prop-vpn-oslab-1;
+        }
+        vpn vpn-oslab-1 {
+            bind-interface st0.1;
+            df-bit clear;
+            ike {
+                gateway gw-vpn-oslab-1;
+                ipsec-policy ipsec-pol-vpn-oslab-1;
+            }
+            establish-tunnels immediately;
+        }
+    }
+    address-book {
+        global {
+            address ns1.evidc 10.39.3.53/32;
+            address ns2.evidc 10.39.3.54/32;
+            address lab1-horizion-vip 10.38.40.2/32;
+            address lab2-horizon-vip 10.38.40.34/32;
+        }
+    }
+    screen {
+        ids-option untrust-screen {
+            icmp {
+                ping-death;
+            }
+            ip {
+                source-route-option;
+                tear-drop;
+            }
+            tcp {
+                syn-flood {
+                    alarm-threshold 1024;
+                    attack-threshold 200;
+                    source-threshold 1024;
+                    destination-threshold 2048;
+                    timeout 20;
+                }
+                land;
+            }
+        }
+    }
+    nat {
+        source {
+            pool 8_44_176_254 {
+                address {
+                    8.44.176.254/32;
+                }
+            }
+            rule-set trust-to-untrust {
+                from zone trust;
+                to zone untrust;
+                rule source-nat-rule {
+                    match {
+                        source-address 0.0.0.0/0;
+                    }
+                    then {
+                        source-nat {
+                            pool {
+                                8_44_176_254;
+                            }
+                        }
+                    }
+                }
+            }
+            rule-set Undercloud-lab1_to_untrust {
+                from zone undercloud-lab1;
+                to zone untrust;
+                rule snat {
+                    match {
+                        source-address 0.0.0.0/0;
+                    }
+                    then {
+                        source-nat {
+                            pool {
+                                8_44_176_254;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    policies {
+        from-zone trust to-zone trust {
+            policy trust-to-trust {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone trust to-zone untrust {
+            policy trust-to-untrust {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone undercloud-lab1 to-zone undercloud-lab1 {
+            policy AllowAll {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone trust to-zone undercloud-lab1 {
+            policy AllowICMP {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application junos-icmp-all;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy Horzion {
+                match {
+                    source-address any;
+                    destination-address [ lab1-horizion-vip lab2-horizon-vip ];
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone undercloud-lab1 to-zone trust {
+            policy AllowICMP {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application junos-icmp-all;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy Undercloud_TO_DNS {
+                match {
+                    source-address any;
+                    destination-address [ ns1.evidc ns2.evidc ];
+                    application [ junos-dns-tcp junos-dns-udp ];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone untrust to-zone untrust {
+            policy AllowAll {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone undercloud-lab2 to-zone trust {
+            policy AllowICMP {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application junos-icmp-all;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy Undercloud_TO_DNS {
+                match {
+                    source-address any;
+                    destination-address [ ns1.evidc ns2.evidc ];
+                    application [ junos-dns-tcp junos-dns-udp ];
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone undercloud-lab2 to-zone undercloud-lab2 {
+            policy AllowAll {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone trust to-zone undercloud-lab2 {
+            policy AllowICMP {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application junos-icmp-all;
+                }
+                then {
+                    permit;
+                }
+            }
+            policy Horzion {
+                match {
+                    source-address any;
+                    destination-address [ lab1-horizion-vip lab2-horizon-vip ];
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+    }
+    zones {
+        security-zone trust {
+            host-inbound-traffic {
+                system-services {
+                    all;
+                }
+                protocols {
+                    all;
+                }
+            }
+            interfaces {
+                reth0.1520;
+                reth0.1620;
+                lt-0/0/0.0;
+                reth0.1521;
+                st0.1;
+                lt-0/0/0.2;
+            }
+        }
+        security-zone untrust {
+            screen untrust-screen;
+            interfaces {
+                reth1.1502 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            traceroute;
+                        }
+                    }
+                }
+                lo0.0 {
+                    host-inbound-traffic {
+                        system-services {
+                            ping;
+                            traceroute;
+                        }
+                    }
+                }
+            }
+        }
+        security-zone undercloud-lab1 {
+            host-inbound-traffic {
+                system-services {
+                    ping;
+                    traceroute;
+                }
+            }
+            interfaces {
+                reth1.1504 {
+                    host-inbound-traffic {
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
+                lo0.1 {
+                    host-inbound-traffic {
+                        protocols {
+                            bgp;
+                        }
+                    }
+                }
+                lt-0/0/0.1 {
+                    host-inbound-traffic {
+                        protocols {
+                            bgp;
+                            ospf;
+                        }
+                    }
+                }
+                reth0.1517;
+            }
+        }
+        security-zone undercloud-lab2 {
+            host-inbound-traffic {
+                system-services {
+                    ping;
+                    traceroute;
+                }
+            }
+            interfaces {
+                reth1.1604 {
+                    host-inbound-traffic {
+                        protocols {
+                            ospf;
+                        }
+                    }
+                }
+                lo0.2 {
+                    host-inbound-traffic {
+                        protocols {
+                            bgp;
+                        }
+                    }
+                }
+                lt-0/0/0.3 {
+                    host-inbound-traffic {
+                        protocols {
+                            bgp;
+                            ospf;
+                        }
+                    }
+                }
+                reth0.1617;
+            }
+        }
+    }
+}
+interfaces {
+    lt-0/0/0 {
+        unit 0 {
+            description "Global instance end";
+            encapsulation ethernet;
+            peer-unit 1;
+            family inet {
+                address 10.38.47.196/31;
+            }
+        }
+        unit 1 {
+            description "Undercloud lab1 instance end";
+            encapsulation ethernet;
+            peer-unit 0;
+            family inet {
+                address 10.38.47.197/31;
+            }
+        }
+        unit 2 {
+            description "Global instance end";
+            encapsulation ethernet;
+            peer-unit 3;
+            family inet {
+                address 10.38.47.198/31;
+            }
+        }
+        unit 3 {
+            description "Undercloud lab2 instance end";
+            encapsulation ethernet;
+            peer-unit 2;
+            family inet {
+                address 10.38.47.199/31;
+            }
+        }
+    }
+    ge-0/0/4 {
+        gigether-options {
+            redundant-parent reth0;
+        }
+    }
+    ge-0/0/5 {
+        gigether-options {
+            redundant-parent reth1;
+        }
+    }
+    ge-3/0/4 {
+        gigether-options {
+            redundant-parent reth0;
+        }
+    }
+    ge-3/0/5 {
+        gigether-options {
+            redundant-parent reth1;
+        }
+    }
+    fab0 {
+        fabric-options {
+            member-interfaces {
+                ge-0/0/2;
+            }
+        }
+    }
+    fab1 {
+        fabric-options {
+            member-interfaces {
+                ge-3/0/2;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 10.38.47.254/32;
+                address 8.44.176.254/32;
+            }
+        }
+        unit 1 {
+            family inet {
+                address 10.38.47.225/32;
+            }
+        }
+        unit 2 {
+            family inet {
+                address 10.38.47.227/32;
+            }
+        }
+    }
+    reth0 {
+        vlan-tagging;
+        redundant-ether-options {
+            redundancy-group 1;
+            lacp {
+                passive;
+                periodic fast;
+            }
+        }
+        unit 1517 {
+            vlan-id 1517;
+            family inet {
+                address 10.38.40.1/27;
+            }
+        }
+        unit 1520 {
+            vlan-id 1520;
+            family inet {
+                address 10.38.41.1/25;
+            }
+        }
+        unit 1521 {
+            vlan-id 1521;
+            family inet {
+                address 8.44.176.1/25;
+            }
+        }
+        unit 1617 {
+            vlan-id 1617;
+            family inet {
+                address 10.38.40.33/27;
+            }
+        }
+        unit 1620 {
+            vlan-id 1620;
+            family inet {
+                address 10.38.41.129/25;
+            }
+        }
+    }
+    reth1 {
+        vlan-tagging;
+        redundant-ether-options {
+            redundancy-group 1;
+            lacp {
+                passive;
+                periodic fast;
+            }
+        }
+        unit 1502 {
+            description "Level3 (edge1 <--> core1)";
+            vlan-id 1502;
+            family inet {
+                address 10.38.47.218/29;
+            }
+        }
+        unit 1504 {
+            vlan-id 1504;
+            family inet {
+                address 10.38.47.193/31;
+            }
+        }
+        unit 1604 {
+            vlan-id 1604;
+            family inet {
+                address 10.38.47.201/31;
+            }
+        }
+    }
+    st0 {
+        unit 1 {
+            family inet {
+                address 169.254.254.11/31;
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 8.44.176.0/24 {
+            discard;
+            no-install;
+        }
+        route 10.38.40.0/21 {
+            discard;
+            no-install;
+        }
+    }
+    router-id 10.38.47.254;
+    autonomous-system 63388;
+}
+protocols {
+    bgp {
+        group iBGP {
+            type internal;
+            export Wavemarket-OUT;
+            neighbor 10.38.47.217;
+        }
+        group Undercloud-lab1 {
+            type internal;
+            local-address 10.38.47.254;
+            export [ GenDefault RFC1918 ];
+            neighbor 10.38.47.225;
+        }
+        group EVDC {
+            type external;
+            export OSLAB-Dataplane-out;
+            neighbor 169.254.254.10 {
+                peer-as 65000;
+            }
+        }
+        group Undercloud-lab2 {
+            type internal;
+            local-address 10.38.47.254;
+            export RFC1918;
+            neighbor 10.38.47.227;
+        }
+    }
+    ospf {
+        reference-bandwidth 100g;
+        area 0.0.0.0 {
+            interface lo0.0 {
+                passive;
+            }
+            interface lt-0/0/0.0 {
+                interface-type p2p;
+            }
+            interface lt-0/0/0.2 {
+                interface-type p2p;
+            }
+        }
+    }
+    l2-learning {
+        global-mode transparent-bridge;
+    }
+    lldp {
+        interface all;
+    }
+}
+policy-options {
+    policy-statement GenDefault {
+        term 10 {
+            from {
+                protocol bgp;
+                route-filter 0.0.0.0/0 exact;
+            }
+            then {
+                next-hop self;
+                accept;
+            }
+        }
+    }
+    policy-statement OSLAB-Dataplane-out {
+        term Dataplane {
+            from {
+                protocol static;
+                route-filter 10.38.40.0/21 exact;
+            }
+            then accept;
+        }
+        term Deny {
+            then reject;
+        }
+    }
+    policy-statement RFC1918 {
+        term 10 {
+            from {
+                protocol [ bgp static ];
+                route-filter 10.0.0.0/8 orlonger;
+            }
+            then {
+                next-hop self;
+                accept;
+            }
+        }
+        term 172.16 {
+            from {
+                protocol [ bgp static ];
+                route-filter 172.16.0.0/12 orlonger;
+            }
+            then {
+                next-hop self;
+                accept;
+            }
+        }
+        term 192.168 {
+            from {
+                protocol [ bgp static ];
+                route-filter 192.168.0.0/16 orlonger;
+            }
+            then {
+                next-hop self;
+                accept;
+            }
+        }
+        then reject;
+    }
+    policy-statement Undercloud-lab1-OUT {
+        term 10 {
+            from {
+                protocol bgp;
+                route-filter 10.38.40.0/21 orlonger;
+            }
+            then accept;
+        }
+        term OS_ExternalNetwork1 {
+            from {
+                protocol direct;
+                route-filter 10.38.40.0/27 exact;
+            }
+            then accept;
+        }
+    }
+    policy-statement Undercloud-lab2-OUT {
+        term 10 {
+            from {
+                protocol bgp;
+                route-filter 10.38.40.0/21 orlonger;
+            }
+            then accept;
+        }
+        term OS_ExternalNetwork2 {
+            from {
+                protocol direct;
+                route-filter 10.38.40.32/27 exact;
+            }
+            then accept;
+        }
+    }
+    policy-statement Wavemarket-OUT {
+        term 10 {
+            from {
+                protocol static;
+                route-filter 8.44.176.0/24 exact;
+            }
+            then accept;
+        }
+        then reject;
+    }
+}
+routing-instances {
+    Undercloud-lab1 {
+        instance-type virtual-router;
+        interface lt-0/0/0.1;
+        interface lo0.1;
+        interface reth0.1517;
+        interface reth1.1504;
+        routing-options {
+            static {
+                route 0.0.0.0/0 next-hop 10.38.47.196;
+            }
+            router-id 10.38.47.225;
+            autonomous-system 63388;
+        }
+        protocols {
+            bgp {
+                group iBGP {
+                    type internal;
+                    local-address 10.38.47.225;
+                    export Undercloud-lab1-OUT;
+                    cluster 10.38.47.225;
+                    neighbor 10.38.47.226;
+                    neighbor 10.38.47.254;
+                }
+            }
+            ospf {
+                reference-bandwidth 100g;
+                area 0.0.0.0 {
+                    interface lo0.1 {
+                        passive;
+                    }
+                    interface reth1.1504 {
+                        interface-type p2p;
+                    }
+                    interface lt-0/0/0.1 {
+                        interface-type p2p;
+                    }
+                }
+            }
+        }
+    }
+    Undercloud-lab2 {
+        instance-type virtual-router;
+        interface lt-0/0/0.3;
+        interface lo0.2;
+        interface reth0.1617;
+        interface reth1.1604;
+        routing-options {
+            router-id 10.38.47.227;
+            autonomous-system 63388;
+        }
+        protocols {
+            bgp {
+                group iBGP {
+                    type internal;
+                    local-address 10.38.47.227;
+                    export Undercloud-lab2-OUT;
+                    cluster 10.38.47.227;
+                    neighbor 10.38.47.228;
+                    neighbor 10.38.47.254;
+                }
+            }
+            ospf {
+                reference-bandwidth 100g;
+                area 0.0.0.0 {
+                    interface lo0.2 {
+                        passive;
+                    }
+                    interface reth1.1604 {
+                        interface-type p2p;
+                    }
+                    interface lt-0/0/0.3 {
+                        interface-type p2p;
+                    }
+                }
+            }
+        }
+    }
+}
