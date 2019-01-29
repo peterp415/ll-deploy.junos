@@ -2,9 +2,7 @@
 - hosts: all
   connection: local
   gather_facts: no
-  vars:
-    junos_build_dir: "{{ playbook_dir }}/build_dir"
-  pre_tasks:
+  tasks:
     - name: Remove host build temp directory
       file:
         path: "{{ junos_build_dir }}"
@@ -44,7 +42,6 @@
         when: "node == result.stdout | re_for_redundancy_group(false)"
       when: "'core-routers' in group_names"
 
-  tasks:
     - name: Commit via Netconf
       junos_config:
         src: "{{ junos_build_dir }}/{{ environment_name }}/{{ inventory_hostname }}.txt"
