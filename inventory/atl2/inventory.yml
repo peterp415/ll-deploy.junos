@@ -1,0 +1,19 @@
+---
+all:
+  children:
+    core-routers:
+      hosts:
+        core1.mgmt.atl2.wavemarket.com:
+        core2.mgmt.atl2.wavemarket.com:
+    edge-routers:
+      hosts:
+        edge1.mgmt.atl2.wavemarket.com:
+        edge2.mgmt.atl2.wavemarket.com:
+    management:
+      hosts:
+        mgmt-edge1.mgmt.atl2.wavemarket.com:
+    junos:
+      children:
+        core-routers:
+        edge-routers:
+        management:
