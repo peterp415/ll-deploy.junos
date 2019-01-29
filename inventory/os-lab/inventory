@@ -1,8 +1,0 @@
-[edge-routers]
-edge1.mgmt.os-lab.hq.wavemarket.com
-
-[core-routers]
-core1.mgmt.os-lab.hq.wavemarket.com
-
-[management]
-mgmt-edge1.mgmt.os-lab.hq.wavemarket.com

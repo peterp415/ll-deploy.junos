@@ -1,0 +1,18 @@
+---
+all:
+  children:
+    core-routers:
+      hosts:
+        core1.mgmt.os-lab.hq.wavemarket.com:
+        core2.mgmt.os-lab.hq.wavemarket.com:
+    edge-routers:
+      hosts:
+        edge1.mgmt.os-lab.hq.wavemarket.com:
+    management:
+      hosts:
+        mgmt-edge1.mgmt.os-lab.hq.wavemarket.com:
+    junos:
+      children:
+        core-routers:
+        edge-routers:
+        management:
