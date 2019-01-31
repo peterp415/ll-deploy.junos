@@ -1,5 +1,0 @@
----
-ansible_network_os: junos
-ansible_connection: netconf
-ansible_ssh_common_args: '-o ProxyCommand="ssh -l root management.mgmt.os-lab.hq.wavemarket.com nc %h %p"'
-junos_build_dir: "{{ playbook_dir }}/build_dir"

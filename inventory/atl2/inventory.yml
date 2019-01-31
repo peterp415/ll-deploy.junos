@@ -4,7 +4,9 @@ all:
     core-routers:
       hosts:
         core1.mgmt.atl2.wavemarket.com:
+          node: node0
         core2.mgmt.atl2.wavemarket.com:
+          node: node1
     edge-routers:
       hosts:
         edge1.mgmt.atl2.wavemarket.com:
@@ -17,3 +19,10 @@ all:
         core-routers:
         edge-routers:
         management:
+      vars:
+        ansible_network_os: junos
+        ansible_connection: netconf
+        ansible_ssh_common_args: '-o ProxyCommand="ssh -l root management.mgmt.atl2.wavemarket.com nc %h %p"'
+        junos_build_dir: "{{ playbook_dir }}/build_dir"
+  vars:
+    environment_name: atl2
