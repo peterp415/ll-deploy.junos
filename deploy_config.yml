@@ -2,15 +2,6 @@
 - hosts: all
   connection: local
   gather_facts: no
-  vars:
-    # The variaables are placed here as they are specific to the playbook and
-    # would need to be replicated in every environment if placed in
-    # group_vars/all.yml.  They are both needed in order to gather facts using
-    # legacy junos-eznc python library.
-    # https://docs.ansible.com/ansible/latest/modules/junos_facts_module.html
-    ansible_python_interpreter: "/usr/bin/env python"
-    junos_provider:
-      host: "{{ inventory_hostname }}"
   tasks:
     - block:
       - name: Remove host build temp directory
@@ -34,23 +25,35 @@
       check_mode: false  # run even in check mode, so we can see diffs
       run_once: true # no need to delete for all hosts
 
-    - block:
-      - name: Gather 'junos_facts'
-        junos_facts:
-          provider: "{{ junos_provider }}"
-          gather_subset:
-            - "!default"
-            - ofacts
+    - name: Gather junos_facts
+      junos_facts:
+        provider: "{{ junos_provider }}"
+        gather_subset:
+          - "!default"
+          - ofacts
+      vars:
+        # The variable placed here as it is specific to only this task and
+        # would need to be replicated in every environment if placed in
+        # group_vars/all.yml or the environment inventory.
+        # https://docs.ansible.com/ansible/latest/modules/junos_facts_module.html
+        junos_provider:
+          host: "{{ inventory_hostname }}"
+      delegate_to: localhost
 
-      - set_fact:
+    - block:
+      - name: Set 'is_secondary' fact for SRX cluster secondary node for RE0
+        set_fact:
           is_secondary: true
         when: "ansible_facts['srx_cluster_redundancy_group']['0'][node]\
                ['status'] == 'secondary'"
-      when: "'core-routers' in group_names"
+      when: ansible_facts['srx_cluster']
 
     - name: Commit via Netconf
       junos_config:
-        src: "{{ junos_build_dir }}/{{ environment_name }}/{{ inventory_hostname }}.txt"
+        src: "{{ junos_build_dir }}/{{ environment_name }}/\
+              {{ inventory_hostname }}.txt"
         src_format: text
         update: override
-      when: "junos_commit is defined and is_secondary|default(false) == false"
+      # when `junos_commit` is true, and `is_secondary` is false
+      when: "junos_commit|default(false)|bool and \
+             is_secondary|default(false) == false"
