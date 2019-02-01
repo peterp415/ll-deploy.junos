@@ -1,9 +1,12 @@
 ---
-
 # Build directory settings
-junos_build_root: ./build_dir
-junos_build_dir: "{{ junos_build_root }}/{{ inventory_hostname }}/tmp"
-junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
+#
+# Commented out until templating is reintroduced into the deploy_config playbook
+# In the interim the static configuration files are found in files/vagrant/
+junos_build_dir: "{{ playbook_dir }}/files" 
+#junos_build_root: ./build_dir
+#junos_build_dir: "{{ junos_build_root }}/{{ inventory_hostname }}/tmp"
+#junos_conf_file: "{{ junos_build_root }}/{{ inventory_hostname }}/junos.conf"
 
 # JunOS settings
 # The Vagrant plugin vagrant-junos sets up ssh access as vagrant, so we will use it
