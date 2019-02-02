@@ -9,15 +9,9 @@
     # fallback.
     data_repo_version: master
   tasks:
-    - block:
-      - name: Set `static_config_dir` fact
-        set_fact:
-          static_config_dir: "{{ junos_build_dir }}/{{ environment_name }}"
-
-      - name: Override `static_config_dir` when environment is vagrant
-        set_fact:
-          static_config_dir: "files/{{ environment_name }}"
-        when: environment_name is match('vagrant')
+    - name: Set `static_config_dir` fact
+      set_fact:
+        static_config_dir: "{{ junos_build_dir }}/{{ environment_name }}"
 
     - name: Gather junos_facts
       junos_facts:
