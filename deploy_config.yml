@@ -2,7 +2,54 @@
 - hosts: all
   connection: local
   gather_facts: no
+  vars:
+    # This variables is used to select which branch/tag is cloned for the data
+    # repo.  The intent is for this is overriden at the command line to
+    # reference a  specific tag or branch.  Master has been set here as a
+    # fallback.
+    data_repo_version: master
   tasks:
+    - block:
+      - name: Set `static_config_dir` fact
+        set_fact:
+          static_config_dir: "{{ junos_build_dir }}/{{ environment_name }}"
+
+      - name: Override `static_config_dir` when environment is vagrant
+        set_fact:
+          static_config_dir: "files/{{ environment_name }}"
+        when: environment_name is match('vagrant')
+
+    - name: Gather junos_facts
+      junos_facts:
+        provider: "{{ junos_provider }}"
+        # `ofacts` collects the "old style" facts via the junos-eznc library
+        # Additional information about `junos_facts` can be found at the  URL
+        # below.
+        gather_subset:
+          - ofacts
+      vars:
+        # The variable placed here as it is specific to only this task and
+        # would need to be replicated in every environment if placed in
+        # group_vars/all.yml or the environment inventory.
+        # https://docs.ansible.com/ansible/latest/modules/junos_facts_module.html
+        junos_provider:
+          host: "{{ inventory_hostname }}"
+      delegate_to: localhost
+
+    # Default to all hosts being primary, below we will change to false for
+    # secondary SRX cluster nodes.
+    - name: Set `is_configuration_target` to true
+      set_fact:
+        is_configuration_target: true
+
+    - block:
+        - name: Set `is_configuration_target` to false for secondary node of SRX cluster
+          set_fact:
+            is_configuration_target: false
+          when: "ansible_facts['srx_cluster_redundancy_group']['0'][node]\
+                ['status'] == 'secondary'"
+      when: ansible_facts['srx_cluster']
+
     - block:
       - name: Remove host build temp directory
         file:
@@ -16,44 +63,25 @@
           state: directory
         changed_when: false
 
-      - name: Clone data repo for the enivornment
+      - name: Clone {{ environment_name }} data repo, {{ data_repo_version }}
         git:
           repo: git@github.int.llabs.io:ig/data.junos-{{ environment_name }}.git
-          dest: "{{ junos_build_dir }}/{{ environment_name }}"
-          version: master
+          dest: "{{ static_config_dir }}"
+          version: "{{ data_repo_version }}"
         changed_when: false
+      when: environment_name is not match('vagrant')
       check_mode: false  # run even in check mode, so we can see diffs
       run_once: true # no need to delete for all hosts
-
-    - name: Gather junos_facts
-      junos_facts:
-        provider: "{{ junos_provider }}"
-        gather_subset:
-          - "!default"
-          - ofacts
-      vars:
-        # The variable placed here as it is specific to only this task and
-        # would need to be replicated in every environment if placed in
-        # group_vars/all.yml or the environment inventory.
-        # https://docs.ansible.com/ansible/latest/modules/junos_facts_module.html
-        junos_provider:
-          host: "{{ inventory_hostname }}"
-      delegate_to: localhost
-
-    - block:
-      - name: Set 'is_secondary' fact for SRX cluster secondary node for RE0
-        set_fact:
-          is_secondary: true
-        when: "ansible_facts['srx_cluster_redundancy_group']['0'][node]\
-               ['status'] == 'secondary'"
-      when: ansible_facts['srx_cluster']
+      # the remote_repo tag is here to allow for the use of --skip-tag
+      # remote_repo when using a local data repo via the -e switch.
+      # ansible-playbook -i inventory deploy_config.yml -e 'static_config_dir=../data_repo' --skip-tags remote_repo
+      tags:
+        - remote_repo
 
     - name: Commit via Netconf
       junos_config:
-        src: "{{ junos_build_dir }}/{{ environment_name }}/\
-              {{ inventory_hostname }}.txt"
+        src: "{{ static_config_dir }}/{{ inventory_hostname }}.txt"
         src_format: text
         update: override
-      # when `junos_commit` is true, and `is_secondary` is false
-      when: "junos_commit|default(false)|bool and \
-             is_secondary|default(false) == false"
+      # when `junos_commit` is true, and `is_configuration_target` is true
+      when: junos_commit|default(false)|bool and is_configuration_target
