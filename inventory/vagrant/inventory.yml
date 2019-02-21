@@ -16,3 +16,4 @@ all:
         ansible_ssh_user: vagrant
   vars:
     environment_name: vagrant
+    local_config_source: "{{ playbook_dir }}/files"
