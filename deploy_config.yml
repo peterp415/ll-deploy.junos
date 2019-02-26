@@ -67,7 +67,7 @@
             dest: "{{ static_config_dir }}"
             version: "{{ data_repo_version }}"
           changed_when: false
-      when: environment_name is not match('vagrant')
+      when: local_config_source is not defined
       check_mode: false  # run even in check mode, so we can see diffs
       run_once: true  # no need to delete for all hosts
 
