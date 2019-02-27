@@ -1,0 +1,22 @@
+---
+all:
+  children:
+    vsrx:
+      children:
+        vsrx-vagrant-left:
+          hosts:
+            srx1-left.vagrant:
+              junos_config_hostname: srx1-left.vagrant
+        vsrx-vagrant-right:
+          hosts:
+            srx1-right.vagrant:
+              junos_config_hostname: srx1-right.vagrant
+      vars:
+        # Variables for use with Vagrant
+        ansible_ssh_private_key_file: ~/.vagrant.d/insecure_private_key
+        ansible_ssh_user: vagrant
+  vars:
+    environment_name: vagrant
+    # Vagrant config files are not stored in a separate repo as is done with
+    # other environments.
+    local_config_source: "{{ playbook_dir }}/files"
