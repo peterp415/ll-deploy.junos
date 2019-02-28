@@ -62,8 +62,8 @@
 
         - name: Clone {{ environment_name }} data repo, {{ data_repo_version }}
           git:
-            repo: git@github.int.llabs.io:ig/data.junos-{{ environment_name }}\
-                  .git
+            repo: "git@github.int.llabs.io:ig/data.junos-{{ environment_name }}\
+                   .git"
             dest: "{{ static_config_dir }}"
             version: "{{ data_repo_version }}"
           changed_when: false
