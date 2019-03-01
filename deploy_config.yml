@@ -12,8 +12,7 @@
     - name: Set `static_config_dir` fact
       set_fact:
         static_config_dir: "{{ (local_config_source is defined)\
-                            |ternary(local_config_source, junos_build_dir) }}\
-                            /{{ environment_name }}"
+                            |ternary(local_config_source, junos_build_dir) }}"
 
     - name: Gather junos_facts
       junos_facts:

@@ -23,6 +23,6 @@ all:
         ansible_network_os: junos
         ansible_connection: netconf
         ansible_ssh_common_args: '-o ProxyCommand="ssh -l root management.mgmt.atl2.wavemarket.com nc %h %p"'
-        junos_build_dir: "{{ playbook_dir }}/build_dir"
+        junos_build_dir: "{{ playbook_dir }}/build_dir/{{ environment_name }}"
   vars:
     environment_name: atl2

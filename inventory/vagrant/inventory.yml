@@ -19,4 +19,4 @@ all:
     environment_name: vagrant
     # Vagrant config files are not stored in a separate repo as is done with
     # other environments.
-    local_config_source: "{{ playbook_dir }}/files"
+    local_config_source: "{{ playbook_dir }}/files/{{ environment_name }}"
