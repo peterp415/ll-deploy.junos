@@ -83,7 +83,7 @@ types of virtual networks and the information about how JunOS works should be se
 
 1. Create/activate a virtualenv for the project and install requirements:
 
-        pip -r requirements.txt
+        pip install -r requirements.txt
 
 2. Install Ansible requirements (shared roles):
 
