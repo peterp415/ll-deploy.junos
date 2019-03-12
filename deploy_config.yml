@@ -11,8 +11,7 @@
   tasks:
     - name: Set `static_config_dir` fact
       set_fact:
-        static_config_dir: "{{ (local_config_source is defined)\
-                            |ternary(local_config_source, junos_build_dir) }}"
+        static_config_dir: "{{ (local_config_source is defined)|ternary(local_config_source, junos_build_dir) }}"
 
     - name: Gather junos_facts
       junos_facts:
@@ -38,12 +37,10 @@
         is_configuration_target: true
 
     - block:
-        - name: "Set `is_configuration_target` to false for secondary node of \
-          SRX cluster"
+        - name: "Set `is_configuration_target` to false for secondary node of SRX cluster"
           set_fact:
             is_configuration_target: false
-          when: "ansible_facts['srx_cluster_redundancy_group']['0'][node]\
-                ['status'] == 'secondary'"
+          when: "ansible_facts['srx_cluster_redundancy_group']['0'][node]['status'] == 'secondary'"
       when: ansible_facts['srx_cluster']
 
     - block:
@@ -61,8 +58,7 @@
 
         - name: Clone {{ environment_name }} data repo, {{ data_repo_version }}
           git:
-            repo: "git@github.int.llabs.io:ig/data.junos-{{ environment_name }}\
-                   .git"
+            repo: "git@github.int.llabs.io:ig/data.junos-{{ environment_name }}.git"
             dest: "{{ static_config_dir }}"
             version: "{{ data_repo_version }}"
           changed_when: false
