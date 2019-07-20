@@ -4,3 +4,6 @@ junos-eznc==2.1.7
 jxmlease
 # srx-provision uses pexpect
 pexpect
+# linters
+yamllint
+ansible-lint
