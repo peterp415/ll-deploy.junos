@@ -10,22 +10,20 @@ configurations are expected to be stored in:
 The deploy requires that the text file be in the culry braced format at this
 time.  The usage is pretty simple, push to all devices showing the diff:
 
-`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/vagrant/inventory deploy_config.yml -e
-'junos_commit=true'-D`
+`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/vagrant/inventory deploy_config.yml -e 'junos_commit=true'-D`
 
 By default the deploy will checkout the correct data repo based off of the
 environment name as defined in the inventory.  The default is to checkout the
 master branch.  This behavior can be overridden through the use of
 `data_repo_version` variable.  The variable can contain a branch or tag.
 
-`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/atl2/inventory.yml
-deploy_config.yml -e 'junos_commit=true' -e 'data_repo_version=2019-02-27.01'`
+`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/atl2/inventory.yml deploy_config.yml -e 'junos_commit=true' -e 'data_repo_version=2019-02-27.01'`
 
 
 To use a local data repo make use of the `local_config_source` variable.
 
-`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/os-lab/inventory.yml
-deploy_config.yml -e 'junos_commit=true' -e 'local_config_source=../data.junos-atl2'`
+
+`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/os-lab/inventory.yml deploy_config.yml -e 'junos_commit=true' -e 'local_config_source=../data.junos-atl2'`
 
 
 **NOTE:** the `ANSIBLE_NETCONF_SSH_CONFIG` option was tested as configured in
