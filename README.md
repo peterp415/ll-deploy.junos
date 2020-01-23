@@ -31,6 +31,26 @@ ansible.cfg and as an `environment` var in the `deploy_config` playbook.  At the
 time of this writing the environment variable set within the shell was the only
 method that worked.
 
+**NOTE:** unlike other secrets in the configuration, the SNMP user secrets do not
+stay unchanged when the `$9$` encrypted hash strings are put back in.  Instead,
+when you set them again the password is changed internally!
+To work around this, we store a decoded version of the hash (which JunOS calls a
+"key").  The side-effect of that is that the SNMP user `authentication-key` and
+`privacy-key` appear to change every deploy, when it is really just the crypt
+string changing.  For example:
+
+    TASK [Commit via Netconf] *************************************************************************************************************************
+    skipping: [core2.mgmt.atl2.wavemarket.com]
+    [edit snmp v3 usm local-engine user cacti authentication-sha]
+    -       authentication-key "$9$e8jvMXVb2aGDSrMXx-wsQF3/uOIRSlvW1IxNdb2g/CAp1RcyleM8z3M8xNY2n/9C0BylKW879Au1IRSybsY2JGHqm3/CkqBIhSeKM8XNdsg4Ziqm2g36CA0OdbwsaZHkPzn/kq5Fn/0ObsY2GDq.5TFnPfRhcyW8xNdw4aZUjPTz.m1RhcleYg4Zik"; ## SECRET-DATA
+    +       authentication-key "$9$TzF/u0IcremfF/9tOBdbw2ZUiHm5z3ji9Ap0IR24oJjH.P5TFnVwFn9A1Is2g4GDP5Q3nCgoZjiHmP0B1ISrM8Xw24W8DiqmTQFn/ApBREyv8XIRwY4oGUp0OBcyMWxVs2W8Nbs2GU0B1Ire8LN-bsx7Hq.P3n9ApOEcylKx-VLXjHq.5T1REyvW"; ## SECRET-DATA
+    [edit snmp v3 usm local-engine user cacti privacy-aes128]
+    -       privacy-key "$9$U8D.PQz6CA03nCuOBEhlKM8X-sYoaUjoaZjiHmPz369A0REyW87hcyKW8dVYgoJGiHqmTFnHkBIRcleUjiHfTzF/9tuGDp01IcSoJZDi.f5Fn6AaZ69CtIRYg4ojHfTz9tuoJGiH.5TFn/AO1IEcKWLFncyreW8ikqf5F369OIEikuO1RSyoJZU.P"; ## SECRET-DATA
+    +       privacy-key "$9$UoD.PQz6CA03nCuOBEhlKM8X-sYoaUjoaZjiHmPz369A0REyW87hcyKW8dVYgoJGiHqmTFnHkBIRcleUjiHfTzF/9tuGDp01IcSoJZDi.f5Fn6AaZ69CtIRYg4ojHfTz9tuoJGiH.5TFn/AO1IEcKWLFncyreW8ikqf5F369OIEikuO1RSyoJZU.P"; ## SECRET-DATA
+    changed: [core1.mgmt.atl2.wavemarket.com]
+
+See [README-snmp-auth](README-snmp-auth.md) for details and how to set new secrets.
+
 ---
 
 This is a deploy for a set of JunOS virtual SRX images that implement:
