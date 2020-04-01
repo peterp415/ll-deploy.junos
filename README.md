@@ -22,8 +22,7 @@ master branch.  This behavior can be overridden through the use of
 
 To use a local data repo make use of the `local_config_source` variable.
 
-
-`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/os-lab/inventory.yml deploy_config.yml -e 'junos_commit=true' -e 'local_config_source=../data.junos-atl2'`
+`ANSIBLE_NETCONF_SSH_CONFIG=1 ansible-playbook -i inventory/os-lab/inventory.yml deploy_config.yml -e 'junos_commit=true' -e 'local_config_source=../data.junos-os-lab'`
 
 
 **NOTE:** the `ANSIBLE_NETCONF_SSH_CONFIG` option was tested as configured in
